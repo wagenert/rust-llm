@@ -1,0 +1,5 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "${workspaceFolder}/text-embedding/Cargo.toml"
+    ]
+}
