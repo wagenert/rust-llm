@@ -16,15 +16,23 @@ fn main() {
     let mut vocabulary: Vec<&str> = split_text.clone();
     vocabulary.sort();
     vocabulary.dedup();
-    println!("Unique words: {}", vocabulary.len());
+    //println!("Unique words: {}", vocabulary.len());
+    vocabulary.push("<|unk|>");
+    vocabulary.push("<|endoftext|>"); // Add unknown token
     // println!("First 10 unique words: {:?}", vocabulary[..50].join(", "));
     let vocabulary_mapper: std::collections::HashMap<&str, usize> = vocabulary.into_iter().zip(0usize..).collect(); 
-    println!("Vocabulary mapper: {:?}", vocabulary_mapper);
+    //println!("Vocabulary mapper: {:?}", vocabulary_mapper);
 
-    let tokenizer = simple_tokenizers::SimpleTokenizerV1::new(vocabulary_mapper);
+    let tokenizer = simple_tokenizers::SimpleTokenizer::new(vocabulary_mapper);
     let ids = tokenizer.encode(&content);
     println!("Encoded IDs: {:?}", &ids[..30]);
 
     println!("Decoded text: {}", tokenizer.decode(&ids[..30]));
 
+    let tokenizer = tiktoken::get_encoding("gpt2").unwrap();
+    let text = "Hello, do you like tea? <|endoftext|> In the sunlit terraces of someunknownPlace";
+    let integers = tokenizer.encode_with_special_tokens(text);
+    println!("Encoded integers: {:?}", integers);
+    let decoded_text = tokenizer.decode_to_string(&integers).unwrap();
+    println!("Decoded text: {}", decoded_text);
 }
