@@ -1,8 +1,7 @@
 use std::ops::Index;
 
 struct GPTDataset {
-    input_ids: Vec<Vec<u32>>,
-    target_ids: Vec<Vec<u32>>,
+    ids: Vec<(Vec<u32>, Vec<u32>)>,
 }
 
 impl GPTDataset {
@@ -18,21 +17,22 @@ impl GPTDataset {
             target_ids.push(target_chunk);
         }
 
-        GPTDataset { input_ids, target_ids }
+        let ids = input_ids.into_iter().zip(target_ids.into_iter()).map(|(input, target)| (input, target)).collect::<Vec<_>>();
+        GPTDataset { ids }
     }
 
     fn len(&self) -> usize {
-        self.input_ids.len()
+        self.ids.len()
     }
 }
 
-impl<'a> Index<usize> for GPTDataset {
-    type Output = (&'a Vec<u32>, &'a Vec<u32>);
+impl Index<usize> for GPTDataset {
+    type Output = (Vec<u32>, Vec<u32>);
 
-    fn index(&self, index: usize) -> &Self::Output {
+    fn index(& self, index: usize) -> & Self::Output {
         if index > self.len() {
             panic!("Index {} out of bounds for dataset of length {}", index, self.len());
         }
-        &(&self.input_ids[index], &self.target_ids[index])
+        &self.ids[index]
     }
 }
