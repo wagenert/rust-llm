@@ -1,18 +1,19 @@
 use std::ops::Index;
+use std::sync::Arc;
 
 use burn::Tensor;
 use burn::data::dataloader::batcher::Batcher;
 use burn::data::dataset::Dataset;
-use burn::data::dataloader::{BatchDataLoader, DataLoader, FixBatchStrategy};
+use burn::data::dataloader::{DataLoader, DataLoaderBuilder};
 use burn::tensor::{Int, TensorData};
 use burn::tensor::backend::Backend;
 
 #[derive(Clone, Debug)]
-struct GPTItem {
+pub struct GPTItem {
     input_ids: Vec<u32>,
     target_ids: Vec<u32>,
 }
-struct GPTDataset {
+pub struct GPTDataset {
     items: Vec<GPTItem>,
 }
 
@@ -62,22 +63,34 @@ impl Dataset<GPTItem> for GPTDataset {
 
 }
 
+#[derive(Clone, Debug)]
 pub struct GPTBatch<B: Backend> {
     pub input_ids: Tensor<B, 2, Int>,
     pub target_ids: Tensor<B, 2, Int>,
 }
 
-pub struct GPTBatcher {}
+#[derive(Clone, Debug)]
+pub struct GPTBatcher {
+    max_length: usize,
+}
+
+impl GPTBatcher {
+    fn new(max_length: usize) -> Self {
+        GPTBatcher { max_length }
+    }
+}
 
 impl<B: Backend> Batcher<B, GPTItem, GPTBatch<B>> for GPTBatcher {
     fn batch(&self, items: Vec<GPTItem>, device: &B::Device) -> GPTBatch<B> {
-        let input_ids: Vec<Tensor<B, 1, Int>> = items.iter().map(|item| item.input_ids)
+        let input_ids: Vec<Tensor<B, 2, Int>> = items.iter().map(|item| &item.input_ids)
             .map(|inputs| TensorData::from(&inputs[..]).convert::<B::IntElem>())
             .map(|data| Tensor::<B, 1, Int>::from_data(data, device))
+            .map(|tensor| tensor.reshape([1, self.max_length]))
             .collect();
-        let target_ids: Vec<Tensor<B, 1, Int>> = items.iter().map(|item| item.target_ids)
+        let target_ids: Vec<Tensor<B, 2, Int>> = items.iter().map(|item| &item.target_ids)
             .map(|targets| TensorData::from(&targets[..]).convert::<B::IntElem>())
             .map(|data| Tensor::<B, 1, Int>::from_data(data, device))
+            .map(|tensor| tensor.reshape([1, self.max_length]))
             .collect();
 
         let input_ids = Tensor::cat(input_ids, 0);
@@ -86,13 +99,27 @@ impl<B: Backend> Batcher<B, GPTItem, GPTBatch<B>> for GPTBatcher {
     }
 }
 
-pub fn create_dataloader<B: Backend>(txt: &str, batch_size: usize, max_length: usize, stride: usize, shuffle: bool, drop_last: bool, device: &B::Device) -> impl DataLoader<B:Device, GPTItem> {
+pub fn create_dataloader<B: Backend>(txt: &str, batch_size: usize, max_length: usize, stride: usize, shuffle: bool, num_workers: usize, device: B::Device) -> Arc<dyn DataLoader<B, GPTBatch<B>>> {
     let tokenizer = tiktoken::get_encoding("gpt2").expect("Failed to get encoding");
-    let dataset = GPTDataset::create(txt, &tokenizer, max_length, stride);
-    let strategy = FixBatchStrategy::new(batch_size);
-    let batcher = GPTBatcher {};
-    let mut dataloader = BatchDataLoader::new(strategy, dataset, batcher, device, None);
+    let dataset = Arc::new(GPTDataset::create(txt, &tokenizer, max_length, stride));
+    // let strategy = Box::new(FixBatchStrategy::<u32>::new(batch_size));
 
+    let batcher = GPTBatcher::new(max_length);
+    let dataloader: Arc<dyn DataLoader<B, GPTBatch<B>>> = 
+        if shuffle {
+            DataLoaderBuilder::new(batcher)
+                .batch_size(batch_size)
+                .num_workers(num_workers)
+                .set_device(device)
+                .shuffle(123)
+                .build(dataset)
+        } else {
+            DataLoaderBuilder::new(batcher)
+                .batch_size(batch_size)
+                .num_workers(num_workers)
+                .set_device(device)
+                .build(dataset)
+        };
 
     dataloader
 }
