@@ -43,19 +43,18 @@ fn main() {
     */
 
     let attn_weights_2: Tensor<MyBackend, 1, Float> = burn::tensor::activation::softmax(attn_scores_2.clone(), 0);
-    // println!("Attention scores (softmax): {}", &attn_weights_2);
-    let attn_weights_reshaped = attn_weights_2.clone().reshape([attn_weights_2.dims()[0], 1]);
-    println!("Attention weights (reshaped): {}", &attn_weights_reshaped.clone().transpose());
+    println!("Attention scores (softmax): {}", &attn_weights_2);
 
-    //let mut context_vec_2 = Vec::new();
-    for (i, x_i) in input_tensor.clone().iter_dim(1).enumerate() {
-        println!("Index: {}, x_i: {}", i, &x_i);
-        //let indices = Tensor::<MyBackend, 1, Int>::from_data([i as i32], &device);
-        //let attn_weight: Tensor<MyBackend, 1, Float> = attn_weights_2.clone().select(0, indices);
-        let weighted_x_i = x_i.matmul(attn_weights_reshaped.clone().transpose());
-        println!("Weighted x_i: {}", &weighted_x_i);
-        //context_vec_2.push(weighted_x_i);
+    let row_dim  = input_tensor.clone().slice(1).dims()[1];
+    println!("Row dimension: {}", row_dim);
+    let mut context_vec_2 = Tensor::<MyBackend, 1, Float>::zeros([row_dim], &device);
+    for (i, x_i) in input_tensor.clone().iter_dim(0).enumerate() {
+        
+        let x_i_reshaped = x_i.clone().reshape([x_i.dims()[1]]);
+        let indices = Tensor::<MyBackend, 1, Int>::from_data([i as i32], &device);
+        let attn_weight: Tensor<MyBackend, 1, Float> = attn_weights_2.clone().select(0, indices);
+        let weighted_x_i = x_i_reshaped * attn_weight;
+        context_vec_2 = context_vec_2.clone() + weighted_x_i;
     }
-    //let context_tensor: Tensor<MyBackend, 1, Float> = Tensor::cat(context_vec_2, 0);
-    //println!("Context vector: {}", &context_tensor);
+    println!("Context vector: {}", &context_vec_2);
 }
