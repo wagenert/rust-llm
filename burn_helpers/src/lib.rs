@@ -1,1 +1,1 @@
-mod gpt_dataset;
+pub mod gpt_dataset;
