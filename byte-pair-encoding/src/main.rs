@@ -1,10 +1,8 @@
-use std::{ range::Range, sync::Arc};
+use std:: sync::Arc;
 
 use burn::{Tensor, backend::Wgpu, data::dataloader::DataLoader, nn::Embedding, tensor::Int};
 
-use crate::gpt_dataset::{GPTBatch, create_dataloader};
-
-mod gpt_dataset;
+use burn_helpers::gpt_dataset::{GPTBatch, create_dataloader};
 
 type MyBackend = Wgpu<f32, i32>;
 
