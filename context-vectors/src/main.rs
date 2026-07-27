@@ -2,8 +2,9 @@ use burn::Tensor;
 // use burn::backend::Wgpu;
 // use burn::backend::wgpu::WgpuDevice;
 use burn::backend::flex::Flex;
+use burn::tensor::activation::softmax;
 use burn::tensor::backend::BackendTypes;
-use burn::tensor::{ElementConversion, Float, Int};
+use burn::tensor::{Float, Int};
 
 //type MyBackend = Wgpu<f32, i32>;
 type MyBackend = Flex<f32, i32>;
@@ -46,7 +47,6 @@ fn main() {
     println!("Attention scores (softmax): {}", &attn_weights_2);
 
     let row_dim  = input_tensor.clone().slice(1).dims()[1];
-    println!("Row dimension: {}", row_dim);
     let mut context_vec_2 = Tensor::<MyBackend, 1, Float>::zeros([row_dim], &device);
     for (i, x_i) in input_tensor.clone().iter_dim(0).enumerate() {
         
@@ -57,4 +57,27 @@ fn main() {
         context_vec_2 = context_vec_2.clone() + weighted_x_i;
     }
     println!("Context vector: {}", &context_vec_2);
+
+    let mut attn_scores = Tensor::<MyBackend, 2, Float>::zeros([6, 6], &device);
+    for (i, x_i) in input_tensor.clone().iter_dim(0).enumerate() {
+        for (j, x_j) in input_tensor.clone().iter_dim(0).enumerate() {
+            println!("{}, {}", i, j);
+            let x_i_reshape = x_i.clone().reshape([x_i.dims()[1]]);
+            //let x_i_reshape = x_i.clone().squeeze();
+            //let x_j_reshape = x_j.clone().reshape([x_j.dims()[1]]);
+            let x_j_reshape = x_j.clone().squeeze();
+            let product = x_i_reshape.clone().dot(x_j_reshape).reshape([1, 1]);
+            attn_scores = attn_scores.slice_assign(burn::tensor::s![i..i+1, j..j+1], product);
+        }
+    }
+    println!("Attention Scores (dot product): {}", attn_scores);
+
+    let attn_scores = input_tensor.clone() * input_tensor.clone();
+    println!("Attention Scores (matmul): {}", attn_scores);
+
+    let attn_weights = softmax(attn_scores.clone(), 1);
+    println!("Attention weights: {}", attn_weights);
+
+    let all_context_vecs = attn_weights.clone() * input_tensor.clone();
+    println!("Context vectors: {}", all_context_vecs);
 }
