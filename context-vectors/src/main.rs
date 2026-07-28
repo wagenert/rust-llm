@@ -49,8 +49,7 @@ fn main() {
     let row_dim  = input_tensor.clone().slice(1).dims()[1];
     let mut context_vec_2 = Tensor::<MyBackend, 1, Float>::zeros([row_dim], &device);
     for (i, x_i) in input_tensor.clone().iter_dim(0).enumerate() {
-        
-        let x_i_reshaped = x_i.clone().reshape([x_i.dims()[1]]);
+        let x_i_reshaped = x_i.clone().squeeze();
         let indices = Tensor::<MyBackend, 1, Int>::from_data([i as i32], &device);
         let attn_weight: Tensor<MyBackend, 1, Float> = attn_weights_2.clone().select(0, indices);
         let weighted_x_i = x_i_reshaped * attn_weight;
@@ -61,10 +60,7 @@ fn main() {
     let mut attn_scores = Tensor::<MyBackend, 2, Float>::zeros([6, 6], &device);
     for (i, x_i) in input_tensor.clone().iter_dim(0).enumerate() {
         for (j, x_j) in input_tensor.clone().iter_dim(0).enumerate() {
-            println!("{}, {}", i, j);
-            let x_i_reshape = x_i.clone().reshape([x_i.dims()[1]]);
-            //let x_i_reshape = x_i.clone().squeeze();
-            //let x_j_reshape = x_j.clone().reshape([x_j.dims()[1]]);
+            let x_i_reshape = x_i.clone().squeeze();
             let x_j_reshape = x_j.clone().squeeze();
             let product = x_i_reshape.clone().dot(x_j_reshape).reshape([1, 1]);
             attn_scores = attn_scores.slice_assign(burn::tensor::s![i..i+1, j..j+1], product);
@@ -72,12 +68,15 @@ fn main() {
     }
     println!("Attention Scores (dot product): {}", attn_scores);
 
-    let attn_scores = input_tensor.clone() * input_tensor.clone();
+    let attn_scores = input_tensor.clone().matmul(input_tensor.clone().transpose());
     println!("Attention Scores (matmul): {}", attn_scores);
 
     let attn_weights = softmax(attn_scores.clone(), 1);
     println!("Attention weights: {}", attn_weights);
 
-    let all_context_vecs = attn_weights.clone() * input_tensor.clone();
+    println!("Input tensor shape: {:?}", input_tensor.clone().dims());
+    println!("Attention weights shape: {:?}", attn_weights.clone().dims());
+
+    let all_context_vecs = attn_weights.clone().matmul(input_tensor.clone());
     println!("Context vectors: {}", all_context_vecs);
 }
