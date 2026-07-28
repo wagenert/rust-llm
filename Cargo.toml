@@ -1,3 +1,3 @@
 [workspace]
 resolver = "3"
-members = ["burn-helpers","byte-pair-encoding", "context-vectors","text-embedding"]
+members = ["burn-helpers","byte-pair-encoding", "context-vectors", "tensor-test", "text-embedding"]
