@@ -1,3 +1,3 @@
 [workspace]
 resolver = "3"
-members = ["attention-weights","burn-helpers","byte-pair-encoding", "casual-attention", "context-vectors", "tensor-test", "text-embedding"]
+members = ["ch03/attention-weights","burn-helpers","ch02/byte-pair-encoding", "ch03/casual-attention", "ch03/context-vectors", "tensor-test", "ch02/text-embedding"]
