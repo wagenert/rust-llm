@@ -1166,6 +1166,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "casual-attention"
+version = "0.1.0"
+dependencies = [
+ "burn",
+ "burn-helpers",
+]
+
+[[package]]
 name = "cc"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
