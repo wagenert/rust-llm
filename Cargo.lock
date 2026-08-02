@@ -4006,6 +4006,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "multi-head-attention"
+version = "0.1.0"
+dependencies = [
+ "burn",
+ "burn-helpers",
+]
+
+[[package]]
 name = "naga"
 version = "29.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
