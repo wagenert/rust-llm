@@ -1,7 +1,11 @@
 {
     "rust-analyzer.linkedProjects": [
-        "${workspaceFolder}/text-embedding/Cargo.toml",
-        "${workspaceFolder}/byte-pair-encoding/Cargo.toml",
-        "${workspaceFolder}/context-vectors/Cargo.toml",
+        "${workspaceFolder}/ch02/text-embedding/Cargo.toml",
+        "${workspaceFolder}/ch02/byte-pair-encoding/Cargo.toml",
+        "${workspaceFolder}/ch03/context-vectors/Cargo.toml",
+        "${workspaceFolder}/ch03/tensor-test/Cargo.toml",
+        "${workspaceFolder}/ch03/attention-weights/Cargo.toml",
+        "${workspaceFolder}/ch03/casual-attention/Cargo.toml",
+        "${workspaceFolder}/burn-helpers/Cargo.toml",
     ]
 }
