@@ -72,7 +72,7 @@ fn main() {
     }
     println!("Attention Scores (dot product): {}", attn_scores);
 
-    let attn_scores = input_tensor.clone() * input_tensor.clone();
+    let attn_scores = input_tensor.clone().matmul(input_tensor.clone().transpose());
     println!("Attention Scores (matmul): {}", attn_scores);
 
     let attn_weights = softmax(attn_scores.clone(), 1);
