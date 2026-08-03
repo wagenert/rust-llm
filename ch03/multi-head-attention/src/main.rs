@@ -19,6 +19,8 @@ fn main() {
     let device = <Flex::<f32, i32> as BackendTypes>::Device::default();
     let input_tensor = Tensor::<MyBackend, 2, Float>::from_data(inputs, &device);
 
+    let batch = Tensor::stack(vec![input_tensor.clone(), input_tensor.clone()], 0);
+
     let context_length = 4;
     let d_in = 3;
     let d_out = 2;
@@ -27,6 +29,7 @@ fn main() {
     println!("Context Vectors: {}", context_vecs);
 
     let mha = MultiHeadAttention::<MyBackend>::new(d_in, d_out, 0.0, 2, false, device);
-    let context_vecs = mha.forward(input_tensor.reshape([1, 6, 3]));
+    let context_vec = mha.forward(batch);
+    println!("Context Vector: {}", context_vec);
 }
 
