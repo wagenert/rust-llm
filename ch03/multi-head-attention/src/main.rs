@@ -19,10 +19,11 @@ fn main() {
     let device = <Flex::<f32, i32> as BackendTypes>::Device::default();
     let input_tensor = Tensor::<MyBackend, 2, Float>::from_data(inputs, &device);
 
-    let context_length = 5;
+    let context_length = 4;
     let d_in = 3;
     let d_out = 2;
     let mha = MultiHeadAttentionWrapper::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
     let context_vecs = mha.forward(input_tensor);
-    println!("Context Vectors: {:?}", context_vecs);
+    println!("Context Vectors: {}", context_vecs);
 }
+
