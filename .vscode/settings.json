@@ -7,5 +7,6 @@
         "${workspaceFolder}/ch03/attention-weights/Cargo.toml",
         "${workspaceFolder}/ch03/casual-attention/Cargo.toml",
         "${workspaceFolder}/burn-helpers/Cargo.toml",
+        "${workspaceFolder}/ch03/multi-head-attention/Cargo.toml"
     ]
 }
