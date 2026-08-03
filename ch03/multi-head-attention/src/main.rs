@@ -1,9 +1,8 @@
 use burn::backend::flex::Flex;
 use burn::tensor::backend::BackendTypes;
 use burn::Tensor;
-use burn::tensor::{Float, Int};
-
-use multi_head_attention::MultiHeadAttentionWrapper;
+use burn::tensor::Float;
+use multi_head_attention::multi_head_attention::MultiHeadAttentionWrapper;
 
 type MyBackend = Flex<f32, i32>;
 
@@ -23,7 +22,7 @@ fn main() {
     let context_length = 5;
     let d_in = 3;
     let d_out = 2;
-    let mha = multi_head_attention::MultiHeadAttentionWrapper::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
+    let mha = MultiHeadAttentionWrapper::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
     let context_vecs = mha.forward(input_tensor);
     println!("Context Vectors: {:?}", context_vecs);
 }
