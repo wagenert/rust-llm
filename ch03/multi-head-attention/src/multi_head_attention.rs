@@ -60,7 +60,7 @@ impl<B: Backend> MultiHeadAttention<B> {
         }
     }
 
-    pub fn forward(&self, input: Tensor<B, 3, Float>) -> Tensor<B, 2, Float> {
+    pub fn forward(&self, input: Tensor<B, 3, Float>) -> Tensor<B, 3, Float> {
         let shape = input.shape();
         let batch_size = shape[0];
         let num_tokens = shape[1];
