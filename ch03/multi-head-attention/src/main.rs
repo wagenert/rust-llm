@@ -21,14 +21,14 @@ fn main() {
 
     let batch = Tensor::stack(vec![input_tensor.clone(), input_tensor.clone()], 0);
 
-    let context_length = 4;
+    let context_length = batch.shape()[1];
     let d_in = 3;
     let d_out = 2;
     let mha = MultiHeadAttentionWrapper::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
     let context_vecs = mha.forward(input_tensor);
     println!("Context Vectors: {}", context_vecs);
 
-    let mha = MultiHeadAttention::<MyBackend>::new(d_in, d_out, 0.0, 2, false, device);
+    let mha = MultiHeadAttention::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
     let context_vec = mha.forward(batch);
     println!("Context Vector: {}", context_vec);
 }
