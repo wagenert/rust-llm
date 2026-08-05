@@ -1,5 +1,5 @@
 use burn::nn::{Dropout, DropoutConfig, Linear, LinearConfig};
-use burn::tensor::{Bool, Int};
+use burn::tensor::Bool;
 use burn::tensor::activation::softmax;
 use burn_helpers::casual_attention::CasualAttention;
 use burn::tensor::{backend::Backend, Tensor};
@@ -7,7 +7,7 @@ use burn::prelude::Float;
 
 pub struct MultiHeadAttentionWrapper<B: Backend> {
     num_heads: usize,
-    context_len: usize,
+    _context_len: usize,
     casual_attention: Vec<CasualAttention<B>>,
 }
 
@@ -16,7 +16,7 @@ impl<B: Backend> MultiHeadAttentionWrapper<B> {
         let casual_attention = (0..num_heads).map(
             |_| CasualAttention::<B>::new(d_in, d_out, dropout, qkv_bias, &device)
         ).collect();
-        Self { num_heads, context_len, casual_attention }
+        Self { num_heads, _context_len: context_len, casual_attention }
     }
 
     pub fn forward(&self, input: Tensor<B, 2, Float>) -> Tensor<B, 2, Float> {
@@ -67,29 +67,29 @@ impl<B: Backend> MultiHeadAttention<B> {
 
     pub fn forward(&self, input: Tensor<B, 3, Float>) -> Tensor<B, 3, Float> {
         let shape = input.shape();
-        println!("Input Shape: {:?}", shape);
+        // println!("Input Shape: {:?}", shape);
         let batch_size = shape[0];
         let num_tokens = shape[1];
         let _d_in = shape[2];
         let keys = self.w_key.forward(input.clone())
             .reshape([batch_size, num_tokens, self.num_heads, self.head_dim])
             .swap_dims(1, 2);
-        println!("Keys: {}", keys.shape());
+        // println!("Keys: {}", keys.shape());
         let queries = self.w_query.forward(input.clone())
             .reshape([batch_size, num_tokens, self.num_heads, self.head_dim])
             .swap_dims(1, 2);
-        println!("Queries: {}", queries.shape());
+        // println!("Queries: {}", queries.shape());
         let values = self.w_value.forward(input)
             .reshape([batch_size, num_tokens, self.num_heads, self.head_dim])
             .swap_dims(1, 2);
-        println!("Values: {}", values.shape());
+        // println!("Values: {}", values.shape());
 
-            // Perform scaled dot-product attention
+        // Perform scaled dot-product attention
         let attn_scores = queries.matmul(keys.clone().swap_dims(2, 3));
         println!("Attention Scores: {}", attn_scores.shape());
         let score_mask = self.mask.clone()
             .slice([..num_tokens, ..num_tokens])
-            .unsqueeze_dims(&[0, 0]);
+            .unsqueeze::<4>();
         println!("Score Mask: {}", score_mask.shape());
         let attn_scores = Tensor::mask_fill(attn_scores, score_mask, f32::NEG_INFINITY);
         let softmax_dim = attn_scores.dims().len() - 1;
@@ -100,7 +100,6 @@ impl<B: Backend> MultiHeadAttention<B> {
         let context_vec = attn_weights.matmul(values)
             .swap_dims(1, 2)
             .reshape([batch_size, num_tokens, self.d_out]);
-        // let context_vec = context_vec.permute([0, 2, 1, 3]).reshape([batch_size, num_tokens, self.d_out]);
         let context_vec = self.out_proj.forward(context_vec);
         context_vec
     }
