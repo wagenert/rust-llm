@@ -13,13 +13,14 @@ pub struct GptConfig124M {
 
 #[derive(Module, Debug)]
 struct DummyGptBlock<B: Backend> {
-    
+    eps: f64,
+    _phantom: std::marker::PhantomData<B>,
 }
 
 
 impl<B: Backend> DummyGptBlock<B> {
-    pub fn new(cfg: &GptConfig124M, eps: f64) -> Self {
-        Self {}
+    pub fn new(_cfg: &GptConfig124M, eps: f64) -> Self {
+        Self { eps, _phantom: std::marker::PhantomData }
     }
 
     pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
@@ -58,11 +59,12 @@ impl<B: Backend> GptDummyModel<B> {
         }
     }
 
-    pub fn forward(&self, input: Tensor<B, 2>) -> Tensor<B, 3> {
-        let seq_len = input.dims().1;
-        let tok_emb = self.tok_emb.forward(input);
-        let pos_ids = Tensor::<B, 2>::arange(seq_len as i64, (1, seq_len as i64), &input.device());
+    pub fn forward(&self, input: Tensor<B, 2, Int>) -> Tensor<B, 3> {
+        let [_batch_size, seq_len] = input.shape()[..2].try_into().unwrap();
+        let tok_emb = self.tok_emb.forward(input.clone());
+        let pos_ids = Tensor::<B, 1, Int>::from_data(Vec::from_iter(0..seq_len as i64).as_slice(), &input.device()).unsqueeze::<2>();
         let pos_emb: Tensor<B, 3> = self.pos_emb.forward(pos_ids);
+
         let mut x = tok_emb + pos_emb;
         x = self.drop_emb.forward(x);
 
