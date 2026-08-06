@@ -8,5 +8,6 @@ members = [
     "ch03/context-vectors",
     "tensor-test",
     "ch02/text-embedding",
-    "ch03/multi-head-attention"
+    "ch03/multi-head-attention",
+    "ch04/basic_llm",
 ]
