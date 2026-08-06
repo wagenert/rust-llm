@@ -1,4 +1,4 @@
-use burn::backend::flex::Flex;
+use burn::{backend::flex::Flex, tensor::backend::Backend};
 use burn::tensor::backend::BackendTypes;
 use burn::Tensor;
 use burn::tensor::Float;
@@ -17,6 +17,7 @@ fn main() {
     ];
 
     let device = <Flex::<f32, i32> as BackendTypes>::Device::default();
+    MyBackend::seed(&device, 123);
     let input_tensor = Tensor::<MyBackend, 2, Float>::from_data(inputs, &device);
 
     let batch = Tensor::stack(vec![input_tensor.clone(), input_tensor.clone()], 0);
@@ -24,10 +25,11 @@ fn main() {
     let context_length = batch.shape()[1];
     let d_in = 3;
     let d_out = 2;
+    /*
     let mha = MultiHeadAttentionWrapper::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
     let context_vecs = mha.forward(input_tensor);
     println!("Context Vectors: {}", context_vecs);
-
+    */
     let mha = MultiHeadAttention::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
     let context_vec = mha.forward(batch);
     println!("Context Vector: {}", context_vec);
