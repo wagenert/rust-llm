@@ -50,8 +50,8 @@ impl<B: Backend> MultiHeadAttention<B> {
         let w_value = LinearConfig::new(d_in, d_out).with_bias(qkv_bias).init(&device);
         let out_proj = LinearConfig::new(d_out, d_out).with_bias(qkv_bias).init(&device);
         let dropout = DropoutConfig::new(dropout).init();
-        let mask = Tensor::triu_mask([context_length, context_length], 1, &device);
-        println!("Mask: {}", mask.shape());
+        let mask = Tensor::tril_mask([context_length, context_length], 0, &device);
+        // println!("Mask: {}", mask.shape());
         Self {
             d_out,
             num_heads,
@@ -67,33 +67,27 @@ impl<B: Backend> MultiHeadAttention<B> {
 
     pub fn forward(&self, input: Tensor<B, 3, Float>) -> Tensor<B, 3, Float> {
         let shape = input.shape();
-        // println!("Input Shape: {:?}", shape);
         let batch_size = shape[0];
         let num_tokens = shape[1];
         let _d_in = shape[2];
         let keys = self.w_key.forward(input.clone())
             .reshape([batch_size, num_tokens, self.num_heads, self.head_dim])
             .swap_dims(1, 2);
-        // println!("Keys: {}", keys.shape());
         let queries = self.w_query.forward(input.clone())
             .reshape([batch_size, num_tokens, self.num_heads, self.head_dim])
             .swap_dims(1, 2);
-        // println!("Queries: {}", queries.shape());
         let values = self.w_value.forward(input)
             .reshape([batch_size, num_tokens, self.num_heads, self.head_dim])
             .swap_dims(1, 2);
-        // println!("Values: {}", values.shape());
 
         // Perform scaled dot-product attention
         let attn_scores = queries.matmul(keys.clone().swap_dims(2, 3));
-        println!("Attention Scores: {}", attn_scores.shape());
         let score_mask = self.mask.clone()
             .slice([..num_tokens, ..num_tokens])
             .unsqueeze::<4>();
-        println!("Score Mask: {}", score_mask.shape());
         let attn_scores = Tensor::mask_fill(attn_scores, score_mask, f32::NEG_INFINITY);
         let softmax_dim = attn_scores.dims().len() - 1;
-        let key_dim = *keys.shape().last().unwrap();
+        let key_dim = *keys.dims().last().unwrap();
         let attn_weights = softmax(attn_scores / (key_dim as f32).sqrt(), softmax_dim);
         let attn_weights = self.dropout.forward(attn_weights);
 
