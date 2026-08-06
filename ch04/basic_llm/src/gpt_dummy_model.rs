@@ -21,15 +21,11 @@ impl<B: Backend> DummyGptBlock<B> {
     pub fn new(cfg: &GptConfig124M, eps: f64) -> Self {
         Self {}
     }
-}
 
-impl Module for DummyGptBlock<B> {
-    type Input = Tensor<B, 3>;
-    type Output = Tensor<B, 3>;
-
-    fn forward(&self, input: Self::Input) -> Self::Output {
+    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
         input
     }
+
 }
 
 #[derive(Module, Debug)]
@@ -66,7 +62,7 @@ impl<B: Backend> GptDummyModel<B> {
         let seq_len = input.dims().1;
         let tok_emb = self.tok_emb.forward(input);
         let pos_ids = Tensor::<B, 2>::arange(seq_len as i64, (1, seq_len as i64), &input.device());
-        let pos_emb = self.pos_emb.forward(pos_ids);
+        let pos_emb: Tensor<B, 3> = self.pos_emb.forward(pos_ids);
         let mut x = tok_emb + pos_emb;
         x = self.drop_emb.forward(x);
 
