@@ -2,7 +2,7 @@ use burn::{backend::flex::Flex, tensor::backend::Backend};
 use burn::tensor::backend::BackendTypes;
 use burn::Tensor;
 use burn::tensor::Float;
-use multi_head_attention::multi_head_attention::{MultiHeadAttention, MultiHeadAttentionWrapper};
+use multi_head_attention::multi_head_attention::MultiHeadAttention;
 
 type MyBackend = Flex<f32, i32>;
 
