@@ -1,7 +1,7 @@
 use burn::nn::{Dropout, DropoutConfig, Linear, LinearConfig};
 use burn::tensor::Bool;
 use burn::tensor::activation::softmax;
-use burn_helpers::casual_attention::CasualAttention;
+use crate::attention_algorithms::casual_attention::CasualAttention;
 use burn::tensor::{backend::Backend, Tensor};
 use burn::prelude::Float;
 
@@ -66,6 +66,7 @@ impl<B: Backend> MultiHeadAttention<B> {
 
     pub fn forward(&self, input: Tensor<B, 3, Float>) -> Tensor<B, 3, Float> {
         let shape = input.shape();
+        // println!("Input Shape: {:?}", shape);
         let batch_size = shape[0];
         let num_tokens = shape[1];
         let _d_in = shape[2];
@@ -86,7 +87,7 @@ impl<B: Backend> MultiHeadAttention<B> {
             .unsqueeze::<4>();
         let attn_scores = Tensor::mask_fill(attn_scores, score_mask, f32::NEG_INFINITY);
         let softmax_dim = attn_scores.dims().len() - 1;
-        let key_dim = *keys.dims().last().unwrap();
+        let key_dim = *keys.shape().last().unwrap();
         let attn_weights = softmax(attn_scores / (key_dim as f32).sqrt(), softmax_dim);
         let attn_weights = self.dropout.forward(attn_weights);
 

@@ -28,9 +28,11 @@ fn main() {
     let d_in = shape[2];
     let _batch_size = shape[0];
     let d_out = 2;
-    // let mha = MultiHeadAttentionWrapper::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
-    // let context_vecs = mha.forward(input_tensor);
-    // println!("Context Vectors: {}", context_vecs);
+    /*
+    let mha = MultiHeadAttentionWrapper::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
+    let context_vecs = mha.forward(input_tensor);
+    println!("Context Vectors: {}", context_vecs);
+    */
     let mha = MultiHeadAttention::<MyBackend>::new(d_in, d_out, context_length, 0.0, 2, false, device);
     let context_vec = mha.forward(batch);
     println!("Context Vector: {}", context_vec);
