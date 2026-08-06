@@ -1,7 +1,7 @@
 use burn::nn::{Dropout, DropoutConfig, Linear, LinearConfig};
 use burn::tensor::Bool;
 use burn::tensor::activation::softmax;
-use burn_helpers::casual_attention::CasualAttention;
+use crate::attention_algorithms::casual_attention::CasualAttention;
 use burn::tensor::{backend::Backend, Tensor};
 use burn::prelude::Float;
 

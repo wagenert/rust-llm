@@ -5,4 +5,4 @@ edition = "2024"
 
 [dependencies]
 burn = { version = "0.21.0", features = ["flex"] }
-burn-helpers = { version = "0.3.0", path = "../../burn-helpers" }
+burn-helpers = { path = "../../burn-helpers" }
