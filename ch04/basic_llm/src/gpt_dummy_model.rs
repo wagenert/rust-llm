@@ -1,13 +1,13 @@
 use::burn::module::Module;
 use burn::{nn::{Dropout, DropoutConfig, Embedding, EmbeddingConfig, LayerNorm, LayerNormConfig, Linear, LinearConfig}, prelude::*};
 pub struct GptConfig124M {
-    vocab_size: usize,
-    context_length: usize,
-    emb_dim: usize,
-    n_heads: usize,
-    n_layers: usize,
-    drop_rate: f64,
-    qkv_bias: bool,
+    pub vocab_size: usize,
+    pub context_length: usize,
+    pub emb_dim: usize,
+    pub n_heads: usize,
+    pub n_layers: usize,
+    pub drop_rate: f64,
+    pub qkv_bias: bool,
 }
 
 
