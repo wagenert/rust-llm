@@ -22,8 +22,8 @@ fn print_gradients(model: ExampleDeepNeuralNetwork<MyBackend>, x: Tensor::<MyBac
     let target = Tensor::<MyBackend, 2>::from_data([[0.0]], device);
 
     let mut loss = MseLoss::new();
-    loss = loss.forward(output.clone(), target.clone(), Reduction::Auto);
-    loss.backward();
+    let loss_value = loss.forward(output.clone(), target.clone(), Reduction::Mean);
+    println!("Loss value: {:?}", loss_value);
 
     for name, param in model.named_parameters() {
         let grad = param.grad();
