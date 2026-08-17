@@ -33,8 +33,8 @@ fn print_gradients(model: ExampleDeepNeuralNetwork<MyBackend>, x: Tensor::<MyBac
 
     let grad_params = GradientsParams::from_grads(grad, &model);
     let mut inspector = GradientInspector { grad_params: &grad_params };
-
-    model.visit(&mut inspector);
+    let device_model = model.to_device(device);
+    device_model.visit(&mut inspector);
 }
 
 fn main() {

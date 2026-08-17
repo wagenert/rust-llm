@@ -1,3 +1,5 @@
+use std::any::{Any, TypeId};
+
 use burn::{module::ModuleVisitor, optim::GradientsParams};
 use burn::tensor::backend::Backend;
 
@@ -7,6 +9,10 @@ pub struct GradientInspector<'a> {
 
 impl<B: Backend> ModuleVisitor<B> for GradientInspector<'_> {
     fn visit_float<const D: usize>(&mut self, param: &burn::module::Param<burn::prelude::Tensor<B, D>>) {
+        if self.grad_params.type_id() != TypeId::of::<&burn::module::Param<burn::prelude::Tensor<B, D>>>() {
+            println!("Type mismatch for parameter {:?}: expected {:?}, found {:?}", param.id, self.grad_params.type_id(), TypeId::of::<&burn::module::Param<burn::prelude::Tensor<B, D>>>());
+            return;
+        }
         if let Some(grad) = self.grad_params.get::<B, D>(param.id) {
             println!("Gradient for {}: {:?}", param.id, grad);
         } else {
@@ -15,6 +21,10 @@ impl<B: Backend> ModuleVisitor<B> for GradientInspector<'_> {
     }
 
     fn visit_int<const D: usize>(&mut self, param: &burn::module::Param<burn::prelude::Tensor<B, D, burn::prelude::Int>>) {
+        if self.grad_params.type_id() != TypeId::of::<&burn::module::Param<burn::prelude::Tensor<B, D, burn::prelude::Int>>>() {
+            println!("Type mismatch for parameter {:?}: expected {:?}, found {:?}", param.id, self.grad_params.type_id(), TypeId::of::<&burn::module::Param<burn::prelude::Tensor<B, D, burn::prelude::Int>>>());
+            return;
+        }
         if let Some(grad) = self.grad_params.get::<B, D>(param.id) {
             println!("Gradient for {}: {:?}", param.id, grad);
         } else {
@@ -23,6 +33,10 @@ impl<B: Backend> ModuleVisitor<B> for GradientInspector<'_> {
     }
 
     fn visit_bool<const D: usize>(&mut self, param: &burn::module::Param<burn::prelude::Tensor<B, D, burn::prelude::Bool>>) {
+        if self.grad_params.type_id() != TypeId::of::<&burn::module::Param<burn::prelude::Tensor<B, D, burn::prelude::Bool>>>() {
+            println!("Type mismatch for parameter {:?}: expected {:?}, found {:?}", param.id, self.grad_params.type_id(), TypeId::of::<&burn::module::Param<burn::prelude::Tensor<B, D, burn::prelude::Bool>>>());
+            return;
+        }
         if let Some(grad) = self.grad_params.get::<B, D>(param.id) {
             println!("Gradient for {}: {:?}", param.id, grad);
         } else {
