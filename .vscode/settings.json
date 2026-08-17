@@ -11,4 +11,11 @@
     ],
     "rust-analyzer.check.command": "check",
     "rust-analyzer.cachePriming.enable": false,
+    "[rust]": {
+        "checkOnSave": {
+            "command": "check"
+        },
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true
+    }
 }
