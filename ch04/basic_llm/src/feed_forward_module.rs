@@ -1,5 +1,9 @@
-use burn::{Tensor, nn::{Gelu, Linear, LinearConfig}, tensor::backend::Backend};
 use burn::module::Module;
+use burn::{
+    Tensor,
+    nn::{Gelu, Linear, LinearConfig},
+    tensor::backend::Backend,
+};
 
 use crate::gpt_dummy_model::GptConfig124M;
 
@@ -12,8 +16,7 @@ pub struct FeedForwardModule<B: Backend> {
 
 impl<B: Backend> FeedForwardModule<B> {
     pub fn new(cfg: &GptConfig124M, device: &B::Device) -> Self {
-        let linear1 = 
-            LinearConfig::new(cfg.emb_dim, 4 * cfg.emb_dim).init(device);
+        let linear1 = LinearConfig::new(cfg.emb_dim, 4 * cfg.emb_dim).init(device);
         let linear2 = LinearConfig::new(4 * cfg.emb_dim, cfg.emb_dim).init(device);
         let activation = Gelu::new();
         Self {
