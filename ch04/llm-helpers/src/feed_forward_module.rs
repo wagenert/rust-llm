@@ -1,11 +1,11 @@
 use burn::module::Module;
 use burn::{
-    Tensor,
     nn::{Gelu, Linear, LinearConfig},
     tensor::backend::Backend,
+    Tensor,
 };
 
-use crate::gpt_dummy_model::GptConfig124M;
+use crate::gpt_config::GptConfig124M;
 
 #[derive(Module, Debug)]
 pub struct FeedForwardModule<B: Backend> {
@@ -26,7 +26,7 @@ impl<B: Backend> FeedForwardModule<B> {
         }
     }
 
-    pub fn forward(&self, input: Tensor<B, 2>) -> Tensor<B, 2> {
+    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
         let x = self.linear1.forward(input);
         let x = self.activation.forward(x);
         self.linear2.forward(x)

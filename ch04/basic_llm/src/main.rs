@@ -1,10 +1,10 @@
 use basic_llm::example_deep_neural_network::ExampleDeepNeuralNetwork;
-use basic_llm::gpt_dummy_model::GptConfig124M;
 use basic_llm::gradient_inspector::GradientInspector;
 use burn::backend::Flex;
 use burn::optim::GradientsParams;
 use burn::prelude::*;
 use burn::tensor::backend::BackendTypes;
+use llm_helpers::gpt_config::GptConfig124M;
 
 static GPT_CONFIG_124M: GptConfig124M = GptConfig124M {
     vocab_size: 50257,
