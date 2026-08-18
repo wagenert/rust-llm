@@ -1,15 +1,9 @@
-use::burn::module::Module;
-use burn::{nn::{Dropout, DropoutConfig, Embedding, EmbeddingConfig, LayerNorm, LayerNormConfig, Linear, LinearConfig}, prelude::*};
-pub struct GptConfig124M {
-    pub vocab_size: usize,
-    pub context_length: usize,
-    pub emb_dim: usize,
-    pub n_heads: usize,
-    pub n_layers: usize,
-    pub drop_rate: f64,
-    pub qkv_bias: bool,
-}
-
+use ::burn::module::Module;
+use burn::{
+    nn::{Dropout, DropoutConfig, Embedding, EmbeddingConfig, LayerNorm, LayerNormConfig, Linear, LinearConfig},
+    prelude::*,
+};
+use llm_helpers::gpt_config::GptConfig124M;
 
 #[derive(Module, Debug)]
 struct DummyGptBlock<B: Backend> {
@@ -17,16 +11,17 @@ struct DummyGptBlock<B: Backend> {
     _phantom: std::marker::PhantomData<B>,
 }
 
-
 impl<B: Backend> DummyGptBlock<B> {
     pub fn new(_cfg: &GptConfig124M, eps: f64) -> Self {
-        Self { eps, _phantom: std::marker::PhantomData }
+        Self {
+            eps,
+            _phantom: std::marker::PhantomData,
+        }
     }
 
     pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
         input
     }
-
 }
 
 #[derive(Module, Debug)]
@@ -44,8 +39,9 @@ impl<B: Backend> GptDummyModel<B> {
         let tok_emb = EmbeddingConfig::new(model_config.vocab_size, model_config.emb_dim).init(&device);
         let pos_emb = EmbeddingConfig::new(model_config.context_length, model_config.emb_dim).init(&device);
         let drop_emb = DropoutConfig::new(model_config.drop_rate).init();
-        let trf_blocks = (0..model_config.n_layers).map(|_| 
-            DummyGptBlock::<B>::new(model_config, 1e-5)).collect();
+        let trf_blocks = (0..model_config.n_layers)
+            .map(|_| DummyGptBlock::<B>::new(model_config, 1e-5))
+            .collect();
         let norm = LayerNormConfig::new(model_config.emb_dim).init(&device);
         let out_head = LinearConfig::new(model_config.emb_dim, model_config.vocab_size).init(&device);
 
@@ -62,7 +58,8 @@ impl<B: Backend> GptDummyModel<B> {
     pub fn forward(&self, input: Tensor<B, 2, Int>) -> Tensor<B, 3> {
         let [_batch_size, seq_len] = input.shape()[..2].try_into().unwrap();
         let tok_emb = self.tok_emb.forward(input.clone());
-        let pos_ids = Tensor::<B, 1, Int>::from_data(Vec::from_iter(0..seq_len as i64).as_slice(), &input.device()).unsqueeze::<2>();
+        let pos_ids = Tensor::<B, 1, Int>::from_data(Vec::from_iter(0..seq_len as i64).as_slice(), &input.device())
+            .unsqueeze::<2>();
         let pos_emb: Tensor<B, 3> = self.pos_emb.forward(pos_ids);
 
         let mut x = tok_emb + pos_emb;
