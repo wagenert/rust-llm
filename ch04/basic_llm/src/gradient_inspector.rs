@@ -1,11 +1,10 @@
-
-use burn::{module::{ModuleVisitor, Param}, optim::GradientsParams, prelude::*};
+use burn::{module::Param, optim::GradientsParams, prelude::*};
 
 pub struct GradientInspector<'a> {
     pub grad_params: &'a GradientsParams,
 }
 
-impl<B: Backend> ModuleVisitor<B> for GradientInspector<'_> {
+impl<B: Backend> burn::module::ModuleVisitor<B> for GradientInspector<'_> {
     fn visit_float<const D: usize>(&mut self, param: &Param<Tensor<B, D>>) {
         println!("Visiting parameter: {:?}", param);
         if let Some(grad) = self.grad_params.get::<B, D>(param.id) {
@@ -15,7 +14,7 @@ impl<B: Backend> ModuleVisitor<B> for GradientInspector<'_> {
         }
     }
 
-    fn visit_int<const D: usize>(&mut self, param: &burn::module::Param<burn::prelude::Tensor<B, D, burn::prelude::Int>>) {
+    fn visit_int<const D: usize>(&mut self, param: &Param<Tensor<B, D, Int>>) {
         println!("Visiting parameter: {:?}", param);
         if let Some(grad) = self.grad_params.get::<B, D>(param.id) {
             println!("Gradient for {}: {:?}", param.id, grad);
@@ -24,7 +23,7 @@ impl<B: Backend> ModuleVisitor<B> for GradientInspector<'_> {
         }
     }
 
-    fn visit_bool<const D: usize>(&mut self, param: &burn::module::Param<burn::prelude::Tensor<B, D, burn::prelude::Bool>>) {
+    fn visit_bool<const D: usize>(&mut self, param: &Param<Tensor<B, D, Bool>>) {
         println!("Visiting parameter: {:?}", param);
         if let Some(grad) = self.grad_params.get::<B, D>(param.id) {
             println!("Gradient for {}: {:?}", param.id, grad);
@@ -40,30 +39,4 @@ impl<B: Backend> ModuleVisitor<B> for GradientInspector<'_> {
     fn exit_module(&mut self, name: &str, container_type: &str) {
         println!("Exiting module: {} of type {}", name, container_type);
     }
-/*
-    fn visit_float_with_path<const D: usize>(
-        &mut self,
-        path: &[String],
-        id: burn::module::ParamId,
-        tensor: &burn::prelude::Tensor<B, D>,
-    ) {
-    }
-
-    fn visit_int_with_path<const D: usize>(
-        &mut self,
-        path: &[String],
-        id: burn::module::ParamId,
-        tensor: &burn::prelude::Tensor<B, D, burn::prelude::Int>,
-    ) {
-    }
-
-    fn visit_bool_with_path<const D: usize>(
-        &mut self,
-        path: &[String],
-        id: burn::module::ParamId,
-        tensor: &burn::prelude::Tensor<B, D, burn::prelude::Bool>,
-    ) {
-    }
-*/
 }
-

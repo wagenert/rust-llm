@@ -1,10 +1,8 @@
-use burn::Tensor;
+use burn::module::Module;
 use burn::nn::{Gelu, Linear, LinearConfig};
-use burn::tensor::backend::Backend;
-use burn::module::{Module};
+use burn::prelude::*;
 
-
-#[derive(Module,Debug)]
+#[derive(Module, Debug)]
 struct ExampleNeuralNetworkLayer<B: Backend> {
     linear1: Linear<B>,
     linear2: Linear<B>,
@@ -16,22 +14,25 @@ impl<B: Backend> ExampleNeuralNetworkLayer<B> {
         let linear1 = LinearConfig::new(layer_size1, layer_size2).init(device);
         let linear2 = LinearConfig::new(layer_size2, layer_size1).init(device);
         let activation = Gelu::new();
-        Self { linear1, linear2, activation }
+        Self {
+            linear1,
+            linear2,
+            activation,
+        }
     }
-    
+
     fn forward(&self, input: burn::Tensor<B, 2>) -> burn::Tensor<B, 2> {
         let x = self.linear1.forward(input);
         let x = self.activation.forward(x);
         self.linear2.forward(x)
     }
 
-    fn get_device(&self) -> B::Device {
+    pub fn get_device(&self) -> B::Device {
         self.linear1.devices()[0].clone()
     }
-
 }
 
-#[derive(Module,Debug)]
+#[derive(Module, Debug)]
 pub struct ExampleDeepNeuralNetwork<B: Backend> {
     use_shortcut: bool,
     layers: Vec<ExampleNeuralNetworkLayer<B>>,
@@ -41,7 +42,11 @@ impl<B: Backend> ExampleDeepNeuralNetwork<B> {
     pub fn new(layer_sizes: &[usize], use_shortcut: bool, device: &B::Device) -> Self {
         let mut layers = Vec::new();
         for i in 1..layer_sizes.len() {
-            layers.push(ExampleNeuralNetworkLayer::new(layer_sizes[i - 1], layer_sizes[i], device));
+            layers.push(ExampleNeuralNetworkLayer::new(
+                layer_sizes[i - 1],
+                layer_sizes[i],
+                device,
+            ));
         }
         Self {
             use_shortcut: use_shortcut,
@@ -62,7 +67,7 @@ impl<B: Backend> ExampleDeepNeuralNetwork<B> {
         x
     }
 
-    fn get_device(&self) -> B::Device {
+    pub fn get_device(&self) -> B::Device {
         self.layers[0].get_device()
     }
 }
