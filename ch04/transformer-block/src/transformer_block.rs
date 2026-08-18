@@ -7,7 +7,7 @@ use burn_helpers::attention_algorithms::multi_head_attention::MultiHeadAttention
 use llm_helpers::feed_forward_module::FeedForwardModule;
 use llm_helpers::gpt_config::GptConfig124M;
 
-struct TransformerBlock<B: Backend> {
+pub struct TransformerBlock<B: Backend> {
     attention: MultiHeadAttention<B>,
     feedforward: FeedForwardModule<B>,
     layer_norm1: LayerNorm<B>,
