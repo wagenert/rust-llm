@@ -1,3 +1,4 @@
+use burn::Tensor;
 use burn::nn::{Gelu, Linear, LinearConfig};
 use burn::tensor::backend::Backend;
 use burn::module::{Module};
@@ -23,6 +24,11 @@ impl<B: Backend> ExampleNeuralNetworkLayer<B> {
         let x = self.activation.forward(x);
         self.linear2.forward(x)
     }
+
+    fn get_device(&self) -> B::Device {
+        self.linear1.devices()[0].clone()
+    }
+
 }
 
 #[derive(Module,Debug)]
@@ -54,5 +60,9 @@ impl<B: Backend> ExampleDeepNeuralNetwork<B> {
             }
         }
         x
+    }
+
+    fn get_device(&self) -> B::Device {
+        self.layers[0].get_device()
     }
 }
