@@ -1,6 +1,6 @@
 use burn::module::Module;
 use burn::nn::{Gelu, Linear, LinearConfig};
-use burn::tensor::backend::Backend;
+use burn::prelude::*;
 
 #[derive(Module, Debug)]
 struct ExampleNeuralNetworkLayer<B: Backend> {
@@ -27,8 +27,8 @@ impl<B: Backend> ExampleNeuralNetworkLayer<B> {
         self.linear2.forward(x)
     }
 
-    pub fn get_layer_device<'a>(&self) -> B::Device {
-        self.linear1.weight.device().clone()
+    pub fn get_device(&self) -> B::Device {
+        self.linear1.devices()[0].clone()
     }
 }
 
@@ -67,7 +67,7 @@ impl<B: Backend> ExampleDeepNeuralNetwork<B> {
         x
     }
 
-    pub fn get_model_device(&self) -> B::Device {
-        self.layers[0].get_layer_device()
+    pub fn get_device(&self) -> B::Device {
+        self.layers[0].get_device()
     }
 }
