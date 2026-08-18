@@ -1,3 +1,5 @@
+use llm_helpers::gpt_config::GptConfig124M;
+
 static GPT_CONFIG_124M: GptConfig124M = GptConfig124M {
     vocab_size: 50257,
     context_length: 1024,
