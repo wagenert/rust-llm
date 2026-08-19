@@ -1,5 +1,11 @@
-use burn::{Tensor, nn::{Dropout, DropoutConfig, Linear, LinearConfig}, prelude::Backend, tensor::{Float, activation::softmax}};
+use burn::module::Module;
+use burn::prelude::*;
+use burn::{
+    nn::{Dropout, DropoutConfig, Linear, LinearConfig},
+    tensor::activation::softmax,
+};
 
+#[derive(Module, Debug)]
 pub struct CasualAttention<B: Backend> {
     w_query: Linear<B>,
     w_key: Linear<B>,
@@ -41,5 +47,4 @@ impl<B: Backend> CasualAttention<B> {
         let value = self.w_value.forward(input.clone());
         attn_weights.matmul(value)
     }
-
 }

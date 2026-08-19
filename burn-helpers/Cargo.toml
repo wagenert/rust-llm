@@ -1,8 +1,8 @@
 [package]
 name = "burn-helpers"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 
 [dependencies]#
 burn = {version = "0.21.0", features = ["wgpu", "dataset"]}
-tiktoken = "3.5.1"
+tiktoken = "4.1.2"
