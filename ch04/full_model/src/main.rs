@@ -1,9 +1,9 @@
-use burn::backends::flex::Flex;
 use burn::prelude::*;
-use llm_helpers::gpt_config::GPTConfig124M;
+use full_model::gpt_model::GptModel;
+use llm_helpers::gpt_config::GptConfig124M;
 
-type B = Flex<f32, i32>;
-type ComputeBackend = Autodiff<B>;
+type B = burn::backend::Flex<f32, i32>;
+type ComputeBackend = burn::backend::Autodiff<B>;
 fn main() {
     let config = GptConfig124M {
         vocab_size: 50257,
@@ -14,6 +14,8 @@ fn main() {
         drop_rate: 0.1,
         qkv_bias: false,
     };
-    let device = <ComputeBackend as BackendTypes>::Device::default();
-    ComputeBackend::seed(device, 123);
+    let device = <ComputeBackend as burn::tensor::backend::BackendTypes>::Device::default();
+    ComputeBackend::seed(&device, 123);
+
+    let model = GptModel::<ComputeBackend>::new(&config, device.clone());
 }
