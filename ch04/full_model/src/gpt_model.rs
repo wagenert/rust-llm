@@ -42,10 +42,9 @@ impl<B: Backend> GptModel<B> {
         let _batch_size = input_shape[0];
         let seq_length = input_shape[1];
         let tok_embeds = self.tok_emb.forward(input.clone());
-        let pos_embeds = self.pos_emb.forward(Tensor::from_data(
-            Vec::from_iter(0..seq_length).as_slice(),
-            &input.device(),
-        ));
+        let pos_input =
+            Tensor::<B, 1, Int>::from_data(Vec::from_iter(0..seq_length).as_slice(), &input.device()).unsqueeze();
+        let pos_embeds = self.pos_emb.forward(pos_input);
         let x = tok_embeds + pos_embeds;
         let x = self.dropout.forward(x);
         let x = self.transformer_block.iter().fold(x, |x, tf| tf.forward(x));
