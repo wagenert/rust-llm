@@ -1,5 +1,6 @@
 use burn::backend::Autodiff;
 use burn::backend::wgpu::Wgpu;
+use burn::module::AutodiffModule;
 use burn::prelude::*;
 use burn::tensor::DType;
 use burn::tensor::backend::BackendTypes;
@@ -7,11 +8,11 @@ use llm_helpers::gpt_config::GptConfig124M;
 use llm_helpers::gpt_model::GptModel;
 
 fn generate_text_simple(
-    model: &GptModel<ComputeBackend>,
-    idx: Tensor<ComputeBackend, 2, Int>,
+    model: &GptModel<B>,
+    idx: Tensor<B, 2, Int>,
     max_new_tokens: usize,
     context_size: u32,
-) -> Tensor<ComputeBackend, 2, Int> {
+) -> Tensor<B, 2, Int> {
     let mut idx = idx.clone();
     for _ in 0..max_new_tokens {
         let idx_cond = idx.clone().slice(s![.., (-(context_size as i32))..-1]);
@@ -42,12 +43,13 @@ fn main() {
     let encoded_vector = tokenizer.encode(starting_context);
     println!("Encoded vector: {encoded_vector:?}");
 
-    let device = <ComputeBackend as BackendTypes>::Device::default();
-    let encoded_tensor =
-        Tensor::<ComputeBackend, 1, Int>::from_data(encoded_vector.as_slice(), &device).unsqueeze::<2>();
+    let device = <B as BackendTypes>::Device::default();
+    let encoded_tensor = Tensor::<B, 1, Int>::from_data(encoded_vector.as_slice(), &device).unsqueeze::<2>();
     println!("Encoded tensor shape: {:?}", encoded_tensor.shape());
-    ComputeBackend::seed(&device, 123);
+    B::seed(&device, 123);
     let model = GptModel::<ComputeBackend>::new(&config, device.clone());
+    // Switching to basic module without AutoDiff
+    let model = model.valid();
     let out = generate_text_simple(&model, encoded_tensor, 6, config.context_length as u32);
     let squeezed_tensor = out.squeeze_dim::<1>(0);
     let out_vector = squeezed_tensor
