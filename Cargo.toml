@@ -9,5 +9,5 @@ members = [
     "tensor-test",
     "ch02/text-embedding",
     "ch03/multi-head-attention",
-    "ch04/basic_llm", "ch04/transformer-block", "ch04/llm-helpers", "ch04/full_model",
+    "ch04/basic_llm", "ch04/transformer-block", "ch04/llm-helpers", "ch04/full_model", "ch04/generate-text",
 ]

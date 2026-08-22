@@ -2880,6 +2880,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "generate-text"
+version = "0.1.0"
+dependencies = [
+ "burn",
+ "llm-helpers",
+ "tiktoken 4.1.2",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
