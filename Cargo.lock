@@ -1155,6 +1155,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "calculate-loss"
+version = "0.1.0"
+dependencies = [
+ "burn",
+ "burn-helpers",
+ "tiktoken 4.1.2",
+]
+
+[[package]]
 name = "candle-core"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
