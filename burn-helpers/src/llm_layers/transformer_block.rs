@@ -1,6 +1,6 @@
 use crate::attention_algorithms::MultiHeadAttention;
 use crate::llm_layers::feed_forward_module::FeedForwardModule;
-use crate::llm_layers::gpt_config::GptConfig124M;
+use crate::llm_layers::gpt_config::GptConfig;
 use burn::module::Module;
 use burn::nn::Dropout;
 use burn::nn::DropoutConfig;
@@ -18,7 +18,7 @@ pub struct TransformerBlock<B: Backend> {
 }
 
 impl<B: Backend> TransformerBlock<B> {
-    pub fn new(config: &GptConfig124M, device: B::Device) -> Self {
+    pub fn new(config: &GptConfig, device: B::Device) -> Self {
         let attention = MultiHeadAttention::<B>::new(
             config.emb_dim,
             config.emb_dim,

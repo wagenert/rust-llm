@@ -1,4 +1,4 @@
-use crate::llm_layers::gpt_config::GptConfig124M;
+use crate::llm_layers::gpt_config::GptConfig;
 use crate::llm_layers::transformer_block::TransformerBlock;
 use burn::module::Module;
 use burn::nn::{Dropout, DropoutConfig, Embedding, EmbeddingConfig, LayerNorm, LayerNormConfig, Linear, LinearConfig};
@@ -15,16 +15,16 @@ pub struct GptModel<B: Backend> {
 }
 
 impl<B: Backend> GptModel<B> {
-    pub fn new(cfg: &GptConfig124M, device: B::Device) -> Self {
-        let tok_emb = EmbeddingConfig::new(cfg.vocab_size, cfg.emb_dim).init(&device);
-        let pos_emb = EmbeddingConfig::new(cfg.context_length, cfg.emb_dim).init(&device);
+    pub fn new(cfg: &GptConfig, device: &B::Device) -> Self {
+        let tok_emb = EmbeddingConfig::new(cfg.vocab_size, cfg.emb_dim).init(device);
+        let pos_emb = EmbeddingConfig::new(cfg.context_length, cfg.emb_dim).init(device);
         let dropout = DropoutConfig::new(cfg.drop_rate).init();
         let mut transformer_block = Vec::<TransformerBlock<B>>::with_capacity(cfg.n_layers);
         for _ in 0..cfg.n_layers {
             transformer_block.push(TransformerBlock::new(&cfg, device.clone()))
         }
-        let final_norm = LayerNormConfig::new(cfg.emb_dim).init(&device);
-        let out_head = LinearConfig::new(cfg.emb_dim, cfg.vocab_size).init(&device);
+        let final_norm = LayerNormConfig::new(cfg.emb_dim).init(device);
+        let out_head = LinearConfig::new(cfg.emb_dim, cfg.vocab_size).init(device);
         Self {
             tok_emb,
             pos_emb,

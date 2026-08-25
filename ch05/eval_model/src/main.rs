@@ -3,7 +3,7 @@ use burn::backend::flex::Flex;
 use burn::module::AutodiffModule;
 use burn::prelude::*;
 use burn::tensor::backend::BackendTypes;
-use burn_helpers::GptConfig124M;
+use burn_helpers::GptConfig;
 use burn_helpers::GptModel;
 
 use eval_model::TextTokenConverter;
@@ -30,19 +30,11 @@ fn generate_text_simple(
 }
 
 fn main() {
-    let config = GptConfig124M {
-        vocab_size: 50257,
-        context_length: 256,
-        emb_dim: 768,
-        n_heads: 12,
-        n_layers: 12,
-        drop_rate: 0.1,
-        qkv_bias: false,
-    };
     let tokenizer = TextTokenConverter::new("gpt2");
     let device = <OptimizerBackend as BackendTypes>::Device::default();
     OptimizerBackend::seed(&device, 123);
-    let model = GptModel::<OptimizerBackend>::new(&config, device.clone());
+    let config = GptConfig::new();
+    let model = config.init::<OptimizerBackend>(&device);
     let eval_model = model.valid();
     let start_context = "Every effort moves you";
     let token_ids = generate_text_simple(
