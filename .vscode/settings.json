@@ -7,7 +7,8 @@
         "${workspaceFolder}/ch03/attention-weights/Cargo.toml",
         "${workspaceFolder}/ch03/casual-attention/Cargo.toml",
         "${workspaceFolder}/burn-helpers/Cargo.toml",
-        "${workspaceFolder}/ch03/multi-head-attention/Cargo.toml"
+        "${workspaceFolder}/ch03/multi-head-attention/Cargo.toml",
+        "${workspaceFolder}/ch05/eval_model/Cargo.toml",
     ],
     "rust-analyzer.check.command": "check",
     "rust-analyzer.cachePriming.enable": false,

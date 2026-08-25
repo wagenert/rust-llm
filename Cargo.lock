@@ -2456,6 +2456,8 @@ name = "eval_model"
 version = "0.1.0"
 dependencies = [
  "burn",
+ "burn-helpers",
+ "tiktoken 4.1.2",
 ]
 
 [[package]]

@@ -1,3 +1,95 @@
+use std::string::FromUtf8Error;
+
+use burn::backend::autodiff::Autodiff;
+use burn::backend::flex::Flex;
+use burn::module::AutodiffModule;
+use burn::prelude::*;
+use burn::tensor::backend::BackendTypes;
+use burn::tensor::{DType, DataError};
+use burn_helpers::llm_layers::gpt_config::GptConfig124M;
+use burn_helpers::llm_layers::gpt_model::GptModel;
+use tiktoken::CoreBpe;
+
+type B = Flex<f32, i32>;
+type OptimizerBackend = Autodiff<B>;
+
+#[derive(Debug)]
+enum TokenDecodingError {
+    StringConversionError(String),
+    DataConversionError(String),
+}
+
+impl From<FromUtf8Error> for TokenDecodingError {
+    fn from(value: FromUtf8Error) -> Self {
+        let utf8_error = value.utf8_error();
+        TokenDecodingError::StringConversionError(format!(
+            "Can not decode byte sequence to utf8. Sequence valid up to {}",
+            utf8_error.valid_up_to()
+        ))
+    }
+}
+
+impl From<DataError> for TokenDecodingError {
+    fn from(value: DataError) -> Self {
+        TokenDecodingError::DataConversionError(format!("{value}"))
+    }
+}
+fn text_to_token_ids<B: Backend>(text: &str, tokenizer: &CoreBpe, device: &B::Device) -> Tensor<B, 2, Int> {
+    let encoded = tokenizer.encode_with_special_tokens(text);
+    let encoded_tensor = Tensor::<B, 1, Int>::from_data(encoded.as_slice(), device).unsqueeze_dim::<2>(0);
+    encoded_tensor
+}
+
+fn token_ids_to_text(token_ids: Tensor<B, 2, Int>, tokenizer: &CoreBpe) -> Result<String, TokenDecodingError> {
+    let text_data = token_ids
+        .squeeze_dim::<1>(0)
+        .to_data()
+        .convert_dtype(DType::U32)
+        .to_vec::<u32>()?;
+    let text_bytes = tokenizer.decode(text_data.as_slice());
+    let decoded_text = String::from_utf8(text_bytes)?;
+    Ok(decoded_text)
+}
+
+fn generate_text_simple(
+    model: &GptModel<B>,
+    idx: Tensor<B, 2, Int>,
+    max_new_tokens: usize,
+    context_size: u32,
+) -> Tensor<B, 2, Int> {
+    let mut idx = idx.clone();
+    for _ in 0..max_new_tokens {
+        let idx_cond = idx.clone().slice(s![.., (-(context_size as i32))..-1]);
+        let logits = model.forward(idx_cond);
+        let logits = logits.slice(s![.., -1, ..]);
+        let probas = burn::tensor::activation::softmax(logits, 2);
+        let idx_next = probas.argmax(2).squeeze_dim(2);
+        idx = Tensor::cat(vec![idx, idx_next], 1);
+    }
+    idx
+}
+
 fn main() {
-    println!("Hello, world!");
+    let config = GptConfig124M {
+        vocab_size: 50257,
+        context_length: 256,
+        emb_dim: 768,
+        n_heads: 12,
+        n_layers: 12,
+        drop_rate: 0.1,
+        qkv_bias: false,
+    };
+    let tokenizer = tiktoken::get_encoding("gpt2").unwrap();
+    let device = <OptimizerBackend as BackendTypes>::Device::default();
+    OptimizerBackend::seed(&device, 123);
+    let model = GptModel::<OptimizerBackend>::new(&config, device);
+    let eval_model = model.valid();
+    let start_context = "Every effort moves you";
+    let token_ids = generate_text_simple(
+        &eval_model,
+        text_to_token_ids(start_context, tokenizer, &device),
+        10,
+        config.context_length as u32,
+    );
+    println!("{}", token_ids_to_text(token_ids, &tokenizer).unwrap());
 }
