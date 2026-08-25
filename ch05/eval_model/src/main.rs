@@ -1,55 +1,15 @@
-use std::string::FromUtf8Error;
-
 use burn::backend::autodiff::Autodiff;
 use burn::backend::flex::Flex;
 use burn::module::AutodiffModule;
 use burn::prelude::*;
 use burn::tensor::backend::BackendTypes;
-use burn::tensor::{DType, DataError};
 use burn_helpers::llm_layers::gpt_config::GptConfig124M;
 use burn_helpers::llm_layers::gpt_model::GptModel;
-use tiktoken::CoreBpe;
+
+use eval_model::text_token_converter::TextTokenConverter;
 
 type B = Flex<f32, i32>;
 type OptimizerBackend = Autodiff<B>;
-
-#[derive(Debug)]
-enum TokenDecodingError {
-    StringConversionError(String),
-    DataConversionError(String),
-}
-
-impl From<FromUtf8Error> for TokenDecodingError {
-    fn from(value: FromUtf8Error) -> Self {
-        let utf8_error = value.utf8_error();
-        TokenDecodingError::StringConversionError(format!(
-            "Can not decode byte sequence to utf8. Sequence valid up to {}",
-            utf8_error.valid_up_to()
-        ))
-    }
-}
-
-impl From<DataError> for TokenDecodingError {
-    fn from(value: DataError) -> Self {
-        TokenDecodingError::DataConversionError(format!("{value}"))
-    }
-}
-fn text_to_token_ids<B: Backend>(text: &str, tokenizer: &CoreBpe, device: &B::Device) -> Tensor<B, 2, Int> {
-    let encoded = tokenizer.encode_with_special_tokens(text);
-    let encoded_tensor = Tensor::<B, 1, Int>::from_data(encoded.as_slice(), device).unsqueeze_dim::<2>(0);
-    encoded_tensor
-}
-
-fn token_ids_to_text(token_ids: Tensor<B, 2, Int>, tokenizer: &CoreBpe) -> Result<String, TokenDecodingError> {
-    let text_data = token_ids
-        .squeeze_dim::<1>(0)
-        .to_data()
-        .convert_dtype(DType::U32)
-        .to_vec::<u32>()?;
-    let text_bytes = tokenizer.decode(text_data.as_slice());
-    let decoded_text = String::from_utf8(text_bytes)?;
-    Ok(decoded_text)
-}
 
 fn generate_text_simple(
     model: &GptModel<B>,
@@ -79,7 +39,7 @@ fn main() {
         drop_rate: 0.1,
         qkv_bias: false,
     };
-    let tokenizer = tiktoken::get_encoding("gpt2").unwrap();
+    let tokenizer = TextTokenConverter::new("gpt2");
     let device = <OptimizerBackend as BackendTypes>::Device::default();
     OptimizerBackend::seed(&device, 123);
     let model = GptModel::<OptimizerBackend>::new(&config, device.clone());
@@ -87,12 +47,12 @@ fn main() {
     let start_context = "Every effort moves you";
     let token_ids = generate_text_simple(
         &eval_model,
-        text_to_token_ids(start_context, tokenizer, &device),
+        tokenizer.text_to_token_ids(start_context, &device),
         10,
         config.context_length as u32,
     );
 
-    match token_ids_to_text(token_ids, tokenizer) {
+    match tokenizer.token_ids_to_text(token_ids) {
         Ok(text) => println!("{text}"),
         Err(error) => println!("Error: {:?}", error),
     }
