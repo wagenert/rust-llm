@@ -1,3 +1,5 @@
-pub mod self_attention;
-pub mod casual_attention;
-pub mod multi_head_attention;
+mod casual_attention;
+mod multi_head_attention;
+mod self_attention;
+
+pub use multi_head_attention::MultiHeadAttention;

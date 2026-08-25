@@ -180,6 +180,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "628d228f918ac3b82fe590352cc719d30664a0c13ca3a60266fe02c7132d480a"
 
 [[package]]
+name = "attention-helpers"
+version = "0.1.0"
+dependencies = [
+ "burn",
+]
+
+[[package]]
 name = "attention-weights"
 version = "0.1.0"
 dependencies = [
@@ -1401,7 +1408,7 @@ version = "0.1.0"
 dependencies = [
  "burn",
  "burn-helpers",
- "tiktoken 3.5.1",
+ "tiktoken 4.1.2",
 ]
 
 [[package]]
@@ -4080,6 +4087,7 @@ dependencies = [
 name = "multi-head-attention"
 version = "0.1.0"
 dependencies = [
+ "attention-helpers",
  "burn",
  "burn-helpers",
 ]

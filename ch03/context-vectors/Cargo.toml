@@ -6,4 +6,4 @@ edition = "2024"
 [dependencies]
 burn = {version = "0.21.0", features = ["flex", "dataset"] }
 burn-helpers = { path = "../../burn-helpers" }
-tiktoken = "3.5.1"
+tiktoken = "4.1.2"

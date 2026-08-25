@@ -1,9 +1,9 @@
+use attention_helpers::casual_attention::CasualAttention;
 use burn::nn::{Dropout, DropoutConfig, Linear, LinearConfig};
+use burn::prelude::Float;
 use burn::tensor::Bool;
 use burn::tensor::activation::softmax;
-use burn_helpers::casual_attention::CasualAttention;
-use burn::tensor::{backend::Backend, Tensor};
-use burn::prelude::Float;
+use burn::tensor::{Tensor, backend::Backend};
 
 pub struct MultiHeadAttentionWrapper<B: Backend> {
     num_heads: usize,
@@ -12,11 +12,23 @@ pub struct MultiHeadAttentionWrapper<B: Backend> {
 }
 
 impl<B: Backend> MultiHeadAttentionWrapper<B> {
-    pub fn new(d_in: usize, d_out: usize, context_len: usize, dropout: f64, num_heads: usize, qkv_bias: bool, device: B::Device) -> Self {
-        let casual_attention = (0..num_heads).map(
-            |_| CasualAttention::<B>::new(d_in, d_out, dropout, qkv_bias, &device)
-        ).collect();
-        Self { num_heads, _context_len: context_len, casual_attention }
+    pub fn new(
+        d_in: usize,
+        d_out: usize,
+        context_len: usize,
+        dropout: f64,
+        num_heads: usize,
+        qkv_bias: bool,
+        device: B::Device,
+    ) -> Self {
+        let casual_attention = (0..num_heads)
+            .map(|_| CasualAttention::<B>::new(d_in, d_out, dropout, qkv_bias, &device))
+            .collect();
+        Self {
+            num_heads,
+            _context_len: context_len,
+            casual_attention,
+        }
     }
 
     pub fn forward(&self, input: Tensor<B, 2, Float>) -> Tensor<B, 2, Float> {
@@ -42,7 +54,15 @@ pub struct MultiHeadAttention<B: Backend> {
 }
 
 impl<B: Backend> MultiHeadAttention<B> {
-    pub fn new(d_in: usize, d_out: usize, context_length: usize, dropout: f64, num_heads: usize, qkv_bias: bool, device: B::Device) -> Self {
+    pub fn new(
+        d_in: usize,
+        d_out: usize,
+        context_length: usize,
+        dropout: f64,
+        num_heads: usize,
+        qkv_bias: bool,
+        device: B::Device,
+    ) -> Self {
         assert!(d_out % num_heads == 0, "d_out must be divisible by num_heads");
         let head_dim = d_out / num_heads;
         let w_query = LinearConfig::new(d_in, d_out).with_bias(qkv_bias).init(&device);
@@ -69,28 +89,33 @@ impl<B: Backend> MultiHeadAttention<B> {
         let batch_size = shape[0];
         let num_tokens = shape[1];
         let _d_in = shape[2];
-        let keys = self.w_key.forward(input.clone())
+        let keys = self
+            .w_key
+            .forward(input.clone())
             .reshape([batch_size, num_tokens, self.num_heads, self.head_dim])
             .swap_dims(1, 2);
-        let queries = self.w_query.forward(input.clone())
+        let queries = self
+            .w_query
+            .forward(input.clone())
             .reshape([batch_size, num_tokens, self.num_heads, self.head_dim])
             .swap_dims(1, 2);
-        let values = self.w_value.forward(input)
+        let values = self
+            .w_value
+            .forward(input)
             .reshape([batch_size, num_tokens, self.num_heads, self.head_dim])
             .swap_dims(1, 2);
 
         // Perform scaled dot-product attention
         let attn_scores = queries.matmul(keys.clone().swap_dims(2, 3));
-        let score_mask = self.mask.clone()
-            .slice([..num_tokens, ..num_tokens])
-            .unsqueeze::<4>();
+        let score_mask = self.mask.clone().slice([..num_tokens, ..num_tokens]).unsqueeze::<4>();
         let attn_scores = Tensor::mask_fill(attn_scores, score_mask, f32::NEG_INFINITY);
         let softmax_dim = attn_scores.dims().len() - 1;
         let key_dim = *keys.dims().last().unwrap();
         let attn_weights = softmax(attn_scores / (key_dim as f32).sqrt(), softmax_dim);
         let attn_weights = self.dropout.forward(attn_weights);
 
-        let context_vec = attn_weights.matmul(values)
+        let context_vec = attn_weights
+            .matmul(values)
             .swap_dims(1, 2)
             .reshape([batch_size, num_tokens, self.d_out]);
         let context_vec = self.out_proj.forward(context_vec);

@@ -1,4 +1,4 @@
-use crate::attention_algorithms::multi_head_attention::MultiHeadAttention;
+use crate::attention_algorithms::MultiHeadAttention;
 use crate::llm_layers::feed_forward_module::FeedForwardModule;
 use crate::llm_layers::gpt_config::GptConfig124M;
 use burn::module::Module;
