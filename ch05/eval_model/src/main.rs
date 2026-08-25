@@ -82,7 +82,7 @@ fn main() {
     let tokenizer = tiktoken::get_encoding("gpt2").unwrap();
     let device = <OptimizerBackend as BackendTypes>::Device::default();
     OptimizerBackend::seed(&device, 123);
-    let model = GptModel::<OptimizerBackend>::new(&config, device);
+    let model = GptModel::<OptimizerBackend>::new(&config, device.clone());
     let eval_model = model.valid();
     let start_context = "Every effort moves you";
     let token_ids = generate_text_simple(
@@ -91,5 +91,9 @@ fn main() {
         10,
         config.context_length as u32,
     );
-    println!("{}", token_ids_to_text(token_ids, &tokenizer).unwrap());
+
+    match token_ids_to_text(token_ids, tokenizer) {
+        Ok(text) => println!("{text}"),
+        Err(error) => println!("Error: {:?}", error),
+    }
 }
