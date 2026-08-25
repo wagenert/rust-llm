@@ -3,7 +3,7 @@ use burn::nn::DropoutConfig;
 use burn::nn::LayerNorm;
 use burn::nn::LayerNormConfig;
 use burn::prelude::*;
-use burn_helpers::attention_algorithms::MultiHeadAttention;
+use burn_helpers::MultiHeadAttention;
 use llm_helpers::feed_forward_module::FeedForwardModule;
 use llm_helpers::gpt_config::GptConfig124M;
 

@@ -6,7 +6,7 @@ use burn::nn::DropoutConfig;
 use burn::nn::LayerNorm;
 use burn::nn::LayerNormConfig;
 use burn::prelude::*;
-use burn_helpers::attention_algorithms::MultiHeadAttention;
+use burn_helpers::MultiHeadAttention;
 
 #[derive(Module, Debug)]
 pub struct TransformerBlock<B: Backend> {

@@ -1,5 +1,7 @@
-pub mod attention_algorithms;
+mod attention_algorithms;
 pub mod gpt_dataset;
-pub mod llm_layers;
-pub use llm_layers::gpt_config::GptConfig124M;
-pub use llm_layers::gpt_model::GptModel;
+mod llm_layers;
+
+pub use attention_algorithms::MultiHeadAttention;
+pub use llm_layers::GptConfig124M;
+pub use llm_layers::GptModel;

@@ -3,8 +3,8 @@ use burn::backend::flex::Flex;
 use burn::module::AutodiffModule;
 use burn::prelude::*;
 use burn::tensor::backend::BackendTypes;
-use burn_helpers::llm_layers::gpt_config::GptConfig124M;
-use burn_helpers::llm_layers::gpt_model::GptModel;
+use burn_helpers::GptConfig124M;
+use burn_helpers::GptModel;
 
 use eval_model::TextTokenConverter;
 
