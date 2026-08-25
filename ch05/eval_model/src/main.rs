@@ -6,7 +6,7 @@ use burn::tensor::backend::BackendTypes;
 use burn_helpers::llm_layers::gpt_config::GptConfig124M;
 use burn_helpers::llm_layers::gpt_model::GptModel;
 
-use eval_model::text_token_converter::TextTokenConverter;
+use eval_model::TextTokenConverter;
 
 type B = Flex<f32, i32>;
 type OptimizerBackend = Autodiff<B>;
