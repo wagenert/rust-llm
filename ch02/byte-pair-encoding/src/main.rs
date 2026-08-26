@@ -1,11 +1,10 @@
-use std:: sync::Arc;
+use std::sync::Arc;
 
 use burn::{Tensor, backend::Wgpu, data::dataloader::DataLoader, nn::Embedding, tensor::Int};
 
-use burn_helpers::gpt_dataset::{GPTBatch, create_dataloader};
+use burn_helpers::{GptBatch, create_dataloader};
 
 type MyBackend = Wgpu<f32, i32>;
-
 
 const FILE_PATH: &str = "../data/The_Verdict.txt";
 fn main() {
@@ -44,7 +43,7 @@ fn main() {
     let second_batch = data_iter.next().expect("Failed to get second batch");
     println!("Second batch input_ids: {}", second_batch.input_ids.to_data());
     println!("Second batch target_ids: {}", second_batch.target_ids.to_data());
-    
+
     let input_ids = Tensor::<MyBackend, 1, Int>::from_data([2, 3, 5, 1], &device).reshape([1, 4]);
     let vocab_size = 6;
     let output_dim = 3;
@@ -57,29 +56,29 @@ fn main() {
     */
     let vocab_size = 50257;
     let output_dim = 256;
-    let token_embedding_layer: Embedding<_> = burn::nn::EmbeddingConfig::new(vocab_size, output_dim)
-        .init::<Wgpu>(&device);
+    let token_embedding_layer: Embedding<_> =
+        burn::nn::EmbeddingConfig::new(vocab_size, output_dim).init::<Wgpu>(&device);
 
     let max_length = 4;
     let batch_size = 8;
     let stride = max_length;
     let shuffle = false;
     let num_workers = 1;
-    let dataloader: Arc<dyn DataLoader<MyBackend, GPTBatch<MyBackend>>> = create_dataloader(&txt, batch_size, max_length, stride, shuffle, num_workers, device.clone());
+    let dataloader: Arc<dyn DataLoader<MyBackend, GptBatch<MyBackend>>> =
+        create_dataloader(&txt, batch_size, max_length, stride, shuffle, num_workers, &device);
     let mut data_iter = dataloader.iter();
     let first_batch = data_iter.next().expect("Failed to get first batch");
     println!("First batch input_ids: {}", first_batch.input_ids);
 
-    let token_embeddings =token_embedding_layer.forward(first_batch.input_ids.clone());
+    let token_embeddings = token_embedding_layer.forward(first_batch.input_ids.clone());
     println!("Shape of embedded input_ids: {:?}", token_embeddings.shape());
 
     let context_length = max_length;
-    let pos_embedding_layer = burn::nn::EmbeddingConfig::new(context_length, output_dim)
-        .init::<Wgpu>(&device);
+    let pos_embedding_layer = burn::nn::EmbeddingConfig::new(context_length, output_dim).init::<Wgpu>(&device);
     let range: Vec<u32> = (0..(context_length as u32)).collect();
-    let pos_embeddings = pos_embedding_layer.forward(Tensor::<MyBackend, 1, Int>::from_data(&range[..], &device).reshape([1, context_length]));
+    let pos_embeddings = pos_embedding_layer
+        .forward(Tensor::<MyBackend, 1, Int>::from_data(&range[..], &device).reshape([1, context_length]));
     println!("Shape of positional embeddings: {:?}", pos_embeddings.shape());
     let input_embeddings = token_embeddings + pos_embeddings;
     println!("Shape of input embeddings: {:?}", input_embeddings.shape());
-
 }

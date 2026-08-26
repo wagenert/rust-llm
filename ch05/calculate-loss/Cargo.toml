@@ -7,3 +7,4 @@ edition = "2024"
 burn = { version = "0.21.0", features = ["flex", "std", "train", "accelerate"] }
 tiktoken = "4.1.2"
 burn-helpers = { path = "../../burn-helpers" }
+train-helpers = { path = "../train-helpers" }
