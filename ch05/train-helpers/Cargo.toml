@@ -1,0 +1,8 @@
+[package]
+name = "train-helpers"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+burn = { version = "0.21.0", features = ["std"] }
+tiktoken = "4.1.2"
