@@ -3,21 +3,21 @@ use std::sync::Arc;
 
 use burn::Tensor;
 use burn::data::dataloader::batcher::Batcher;
-use burn::data::dataset::Dataset;
 use burn::data::dataloader::{DataLoader, DataLoaderBuilder};
-use burn::tensor::{Int, TensorData};
+use burn::data::dataset::Dataset;
 use burn::tensor::backend::Backend;
+use burn::tensor::{Int, TensorData};
 
 #[derive(Clone, Debug)]
-pub struct GPTItem {
+pub struct GptItem {
     input_ids: Vec<u32>,
     target_ids: Vec<u32>,
 }
-pub struct GPTDataset {
-    items: Vec<GPTItem>,
+pub struct GptDataset {
+    items: Vec<GptItem>,
 }
 
-impl GPTDataset {
+impl GptDataset {
     fn create(txt: &str, tokenizer: &tiktoken::CoreBpe, max_length: usize, stride: usize) -> Self {
         let token_ids = tokenizer.encode(txt);
         let mut input_ids = Vec::new();
@@ -30,64 +30,76 @@ impl GPTDataset {
             target_ids.push(target_chunk);
         }
 
-        let items = input_ids.into_iter().zip(target_ids.into_iter()).map(|(input, target)| GPTItem { input_ids: input, target_ids: target }).collect::<Vec<_>>();
-        GPTDataset { items }
+        let items = input_ids
+            .into_iter()
+            .zip(target_ids.into_iter())
+            .map(|(input, target)| GptItem {
+                input_ids: input,
+                target_ids: target,
+            })
+            .collect::<Vec<_>>();
+        GptDataset { items }
     }
-
 }
 
-impl Index<usize> for GPTDataset {
-    type Output = GPTItem;
+impl Index<usize> for GptDataset {
+    type Output = GptItem;
 
-    fn index(& self, index: usize) -> & Self::Output {
+    fn index(&self, index: usize) -> &Self::Output {
         if index >= self.items.len() {
-            panic!("Index {} out of bounds for dataset of length {}", index, self.items.len());
+            panic!(
+                "Index {} out of bounds for dataset of length {}",
+                index,
+                self.items.len()
+            );
         }
         &self.items[index]
     }
 }
 
-impl Dataset<GPTItem> for GPTDataset {
+impl Dataset<GptItem> for GptDataset {
     fn len(&self) -> usize {
         self.items.len()
     }
 
-    fn get(&self, index: usize) -> Option<GPTItem> 
-    {
+    fn get(&self, index: usize) -> Option<GptItem> {
         if index < self.len() {
             Some(self.items[index].clone())
         } else {
             None
         }
     }
-
 }
 
 #[derive(Clone, Debug)]
-pub struct GPTBatch<B: Backend> {
+pub struct GptBatch<B: Backend> {
     pub input_ids: Tensor<B, 2, Int>,
     pub target_ids: Tensor<B, 2, Int>,
 }
 
 #[derive(Clone, Debug)]
-pub struct GPTBatcher {
+pub struct GptBatcher {
     max_length: usize,
 }
 
-impl GPTBatcher {
+impl GptBatcher {
     fn new(max_length: usize) -> Self {
-        GPTBatcher { max_length }
+        GptBatcher { max_length }
     }
 }
 
-impl<B: Backend> Batcher<B, GPTItem, GPTBatch<B>> for GPTBatcher {
-    fn batch(&self, items: Vec<GPTItem>, device: &B::Device) -> GPTBatch<B> {
-        let input_ids: Vec<Tensor<B, 2, Int>> = items.iter().map(|item| &item.input_ids)
+impl<B: Backend> Batcher<B, GptItem, GptBatch<B>> for GptBatcher {
+    fn batch(&self, items: Vec<GptItem>, device: &B::Device) -> GptBatch<B> {
+        let input_ids: Vec<Tensor<B, 2, Int>> = items
+            .iter()
+            .map(|item| &item.input_ids)
             .map(|inputs| TensorData::from(&inputs[..]).convert::<B::IntElem>())
             .map(|data| Tensor::<B, 1, Int>::from_data(data, device))
             .map(|tensor| tensor.reshape([1, self.max_length]))
             .collect();
-        let target_ids: Vec<Tensor<B, 2, Int>> = items.iter().map(|item| &item.target_ids)
+        let target_ids: Vec<Tensor<B, 2, Int>> = items
+            .iter()
+            .map(|item| &item.target_ids)
             .map(|targets| TensorData::from(&targets[..]).convert::<B::IntElem>())
             .map(|data| Tensor::<B, 1, Int>::from_data(data, device))
             .map(|tensor| tensor.reshape([1, self.max_length]))
@@ -95,31 +107,38 @@ impl<B: Backend> Batcher<B, GPTItem, GPTBatch<B>> for GPTBatcher {
 
         let input_ids = Tensor::cat(input_ids, 0);
         let target_ids = Tensor::cat(target_ids, 0);
-        GPTBatch { input_ids, target_ids }
+        GptBatch { input_ids, target_ids }
     }
 }
 
-pub fn create_dataloader<B: Backend>(txt: &str, batch_size: usize, max_length: usize, stride: usize, shuffle: bool, num_workers: usize, device: B::Device) -> Arc<dyn DataLoader<B, GPTBatch<B>>> {
+pub fn create_dataloader<B: Backend>(
+    txt: &str,
+    batch_size: usize,
+    max_length: usize,
+    stride: usize,
+    shuffle: bool,
+    num_workers: usize,
+    device: &B::Device,
+) -> Arc<dyn DataLoader<B, GptBatch<B>>> {
     let tokenizer = tiktoken::get_encoding("gpt2").expect("Failed to get encoding");
-    let dataset = Arc::new(GPTDataset::create(txt, &tokenizer, max_length, stride));
+    let dataset = Arc::new(GptDataset::create(txt, &tokenizer, max_length, stride));
     // let strategy = Box::new(FixBatchStrategy::<u32>::new(batch_size));
 
-    let batcher = GPTBatcher::new(max_length);
-    let dataloader: Arc<dyn DataLoader<B, GPTBatch<B>>> = 
-        if shuffle {
-            DataLoaderBuilder::new(batcher)
-                .batch_size(batch_size)
-                .num_workers(num_workers)
-                .set_device(device)
-                .shuffle(123)
-                .build(dataset)
-        } else {
-            DataLoaderBuilder::new(batcher)
-                .batch_size(batch_size)
-                .num_workers(num_workers)
-                .set_device(device)
-                .build(dataset)
-        };
+    let batcher = GptBatcher::new(max_length);
+    let dataloader: Arc<dyn DataLoader<B, GptBatch<B>>> = if shuffle {
+        DataLoaderBuilder::new(batcher)
+            .batch_size(batch_size)
+            .num_workers(num_workers)
+            .set_device(device.clone())
+            .shuffle(123)
+            .build(dataset)
+    } else {
+        DataLoaderBuilder::new(batcher)
+            .batch_size(batch_size)
+            .num_workers(num_workers)
+            .set_device(device.clone())
+            .build(dataset)
+    };
 
     dataloader
 }
