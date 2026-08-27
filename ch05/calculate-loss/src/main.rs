@@ -1,6 +1,7 @@
 use burn::backend::wgpu::Wgpu;
 use burn::nn::loss::CrossEntropyLossConfig;
-use burn::optim::{AdamW, GradientsParams, SimpleOptimizer};
+use burn::optim::adaptor::OptimizerAdaptor;
+use burn::optim::{AdamW, GradientsParams, Optimizer};
 use burn::prelude::*;
 use burn::tensor::backend::{AutodiffBackend, BackendTypes};
 use burn::{backend::Autodiff, data::dataloader::DataLoader};
@@ -46,17 +47,17 @@ fn calc_loss_loader<B: Backend>(
 }
 
 fn train_model_simple<B: AutodiffBackend>(
-    model: &GptModel<B>,
+    model: &mut GptModel<B>,
     train_loader: Arc<dyn DataLoader<B, GptBatch<B>>>,
     val_loader: Arc<dyn DataLoader<B, GptBatch<B>>>,
-    optimizer: AdamW,
+    optimizer: OptimizerAdaptor<AdamW, GptModel<B>, B>,
     device: &B::Device,
     num_epochs: usize,
     eval_freq: usize,
     eval_iter: usize,
     start_context: &str,
     tokenizer: &CoreBpe,
-) {
+) -> (Vec<f32>, Vec<f32>, Vec<usize>) {
     let mut train_losses = Vec::new();
     let mut val_losses = Vec::new();
     let mut track_tokens_seen = Vec::new();
@@ -69,9 +70,25 @@ fn train_model_simple<B: AutodiffBackend>(
             let loss = calc_loss_batch(batch, model, device);
             let grads = loss.backward();
             let grads_params = GradientsParams::from_grads(grads, model);
-            let model = optimizer.step(0.0001, model, grads_params, None);
+            model = &mut optimizer.step(0.0001, model.clone(), grads_params);
+
+            tokens_seen += batch.input_ids.num_params();
+            global_step += 1;
+            let (train_loss, val_loss) = evaluate_model(model, train_loader, val_loader, device, eval_iter);
+            train_losses.push(train_loss);
+            val_losses.push(val_loss);
+            track_tokens_seen.push(tokens_seen);
+            println!(
+                "Ep {} (Step {:06}): Train loss {:.3}, Val loss {:.3}",
+                epoch + 1,
+                global_step,
+                train_loss,
+                val_loss
+            );
         }
+        generate_and_print_sample(model, tokenizer, device, start_context);
     }
+    (train_losses, val_losses, track_tokens_seen)
 }
 
 fn main() {
