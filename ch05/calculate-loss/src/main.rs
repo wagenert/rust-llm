@@ -1,24 +1,23 @@
 use burn::backend::wgpu::Wgpu;
 use burn::nn::loss::CrossEntropyLossConfig;
+use burn::optim::{AdamW, GradientsParams, SimpleOptimizer};
 use burn::prelude::*;
-use burn::tensor::backend::BackendTypes;
+use burn::tensor::backend::{AutodiffBackend, BackendTypes};
 use burn::{backend::Autodiff, data::dataloader::DataLoader};
 use burn_helpers::{GptBatch, GptConfig, GptModel, create_dataloader};
 use std::{fs, sync::Arc};
+use tiktoken::CoreBpe;
 
 type B = Wgpu<f32, i32>;
 type OptimizeBackend = Autodiff<B>;
 
 const FILEPATH: &str = "data/The_Verdict.txt";
 
-fn calc_loss_batch<B: Backend>(batch: GptBatch<B>, model: &GptModel<B>, device: &B::Device) -> f32 {
+fn calc_loss_batch<B: Backend>(batch: GptBatch<B>, model: &GptModel<B>, device: &B::Device) -> Tensor<B, 1> {
     let logits = model.forward(batch.input_ids);
     let loss = CrossEntropyLossConfig::new().init(device);
 
     loss.forward(logits.flatten(0, 1), batch.target_ids.flatten(0, 1))
-        .mean()
-        .into_scalar()
-        .to_f32()
 }
 
 fn calc_loss_loader<B: Backend>(
@@ -32,7 +31,7 @@ fn calc_loss_loader<B: Backend>(
     for batch in data_loader.iter() {
         batches_count += 1;
         let loss = calc_loss_batch(batch, model, device);
-        total_loss += loss;
+        total_loss += loss.mean().into_scalar().to_f32();
         if let Some(max_batches) = num_batches {
             if batches_count >= max_batches {
                 break;
@@ -44,6 +43,35 @@ fn calc_loss_loader<B: Backend>(
         return f32::NAN;
     }
     total_loss / (batches_count as f32)
+}
+
+fn train_model_simple<B: AutodiffBackend>(
+    model: &GptModel<B>,
+    train_loader: Arc<dyn DataLoader<B, GptBatch<B>>>,
+    val_loader: Arc<dyn DataLoader<B, GptBatch<B>>>,
+    optimizer: AdamW,
+    device: &B::Device,
+    num_epochs: usize,
+    eval_freq: usize,
+    eval_iter: usize,
+    start_context: &str,
+    tokenizer: &CoreBpe,
+) {
+    let mut train_losses = Vec::new();
+    let mut val_losses = Vec::new();
+    let mut track_tokens_seen = Vec::new();
+    let mut global_step = -1;
+    let mut tokens_seen = 0;
+
+    for epoch in 0..num_epochs {
+        for batch in train_loader.iter() {
+            //optimizer.zero_grad();
+            let loss = calc_loss_batch(batch, model, device);
+            let grads = loss.backward();
+            let grads_params = GradientsParams::from_grads(grads, model);
+            let model = optimizer.step(0.0001, model, grads_params, None);
+        }
+    }
 }
 
 fn main() {
