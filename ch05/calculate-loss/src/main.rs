@@ -7,8 +7,8 @@ use burn::tensor::backend::BackendTypes;
 use burn_helpers::{GptBatch, GptConfig, GptModel, create_dataloader};
 use std::{fs, sync::Arc};
 
-type B = Flex<f32, i32>;
-type OptimizeBackend = Autodiff<B>;
+type InnerBackend = Wgpu<f32, i32>;
+type OptimizeBackend = Autodiff<InnerBackend>;
 
 const FILEPATH: &str = "data/The_Verdict.txt";
 
