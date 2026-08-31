@@ -1,18 +1,19 @@
+use burn::backend::Flex;
 use burn::backend::wgpu::Wgpu;
 use burn::module::AutodiffModule;
 use burn::nn::loss::CrossEntropyLossConfig;
 use burn::optim::adaptor::OptimizerAdaptor;
 use burn::optim::{AdamW, AdamWConfig, GradientsParams, Optimizer};
 use burn::prelude::*;
-use burn::tensor::backend::{AutodiffBackend, BackendTypes};
 use burn::tensor::DType;
+use burn::tensor::backend::{AutodiffBackend, BackendTypes};
 use burn::{backend::Autodiff, data::dataloader::DataLoader};
-use burn_helpers::{create_dataloader, GptBatch, GptConfig, GptModel};
+use burn_helpers::{GptBatch, GptConfig, GptModel, create_dataloader};
 use std::{fs, sync::Arc};
 use tiktoken::CoreBpe;
 
-type B = Wgpu<f32, i32>;
-type OptimizeBackend = Autodiff<B>;
+type InnerBackend = Flex<f32, i32>;
+type OptimizeBackend = Autodiff<InnerBackend>;
 
 const FILEPATH: &str = "data/The_Verdict.txt";
 
@@ -119,15 +120,22 @@ fn generate_and_print_sample<B: AutodiffBackend>(
     start_context: &str,
 ) {
     let eval_model = model.valid();
-    let eval_device = eval_model.devices()[0].clone();
     let input_ids = tokenizer.encode(start_context);
     let input_tensor: burn::tensor::Tensor<B::InnerBackend, 2, Int> =
-        burn::tensor::Tensor::<B::InnerBackend, 1, Int>::from_data(input_ids.as_slice(), &eval_device)
-            .unsqueeze_dim::<2>(0);
-    let output = eval_model.forward(input_tensor.to_device(&eval_device));
+        burn::tensor::Tensor::<B::InnerBackend, 1, Int>::from_data(input_ids.as_slice(), device).unsqueeze_dim::<2>(0);
+    let output = eval_model.forward(input_tensor);
+    // println!("Output shape {:?}", output.shape());
     let generated_ids = output.clone().argmax(output.dims().len() - 1);
     let generated_text = tokenizer.decode(&generated_ids.to_data().convert_dtype(DType::U32).as_slice().unwrap());
-    println!("Generated sample: {}", String::from_utf8(generated_text).unwrap());
+    println!(
+        "Generated sample: {} {}",
+        start_context,
+        String::from_utf8(generated_text)
+            .unwrap()
+            .replace("\r\n", " ")
+            .replace("\n", " ")
+            .replace("\r", " ")
+    );
 }
 
 fn main() {
@@ -148,6 +156,7 @@ fn main() {
     let val_data = &text[split_idx..];
     let train_loader: Arc<dyn DataLoader<_, GptBatch<_>>> = create_dataloader::<OptimizeBackend>(
         train_data,
+        tokenizer,
         2,
         config.context_length,
         config.context_length,
@@ -157,6 +166,7 @@ fn main() {
     );
     let val_loader: Arc<dyn DataLoader<_, GptBatch<_>>> = create_dataloader::<OptimizeBackend>(
         val_data,
+        tokenizer,
         2,
         config.context_length,
         config.context_length,
@@ -172,7 +182,7 @@ fn main() {
     let num_epochs = 10;
     let eval_freq = 5;
     let eval_iter = 5;
-    let start_context = "Every effort movex you";
+    let start_context = "Every effort moves you";
     let (train_losses, val_losses, tokens_seen) = train_model_simple(
         &mut model,
         train_loader,

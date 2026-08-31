@@ -10,7 +10,7 @@ const FILE_PATH: &str = "../data/The_Verdict.txt";
 fn main() {
     let file = std::fs::File::open(FILE_PATH).expect("Failed to open file");
     let txt = std::io::read_to_string(file).expect("Failed to read file");
-    let tokenizer = tiktoken::get_encoding("gpt2").expect("Failed to get encoding");
+    let tokenizer: &tiktoken::CoreBpe = tiktoken::get_encoding("gpt2").expect("Failed to get encoding");
 
     let enc_text = tokenizer.encode(&txt);
     println!("Encoded text length: {:?}", enc_text.len());
@@ -64,8 +64,16 @@ fn main() {
     let stride = max_length;
     let shuffle = false;
     let num_workers = 1;
-    let dataloader: Arc<dyn DataLoader<MyBackend, GptBatch<MyBackend>>> =
-        create_dataloader(&txt, batch_size, max_length, stride, shuffle, num_workers, &device);
+    let dataloader: Arc<dyn DataLoader<MyBackend, GptBatch<MyBackend>>> = create_dataloader(
+        &txt,
+        tokenizer,
+        batch_size,
+        max_length,
+        stride,
+        shuffle,
+        num_workers,
+        &device,
+    );
     let mut data_iter = dataloader.iter();
     let first_batch = data_iter.next().expect("Failed to get first batch");
     println!("First batch input_ids: {}", first_batch.input_ids);

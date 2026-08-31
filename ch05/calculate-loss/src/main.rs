@@ -62,6 +62,7 @@ fn main() {
     let val_data = &text[split_idx..];
     let train_loader: Arc<dyn DataLoader<_, GptBatch<_>>> = create_dataloader::<OptimizeBackend>(
         train_data,
+        tokenizer,
         2,
         config.context_length,
         config.context_length,
@@ -71,6 +72,7 @@ fn main() {
     );
     let val_loader: Arc<dyn DataLoader<_, GptBatch<_>>> = create_dataloader::<OptimizeBackend>(
         val_data,
+        tokenizer,
         2,
         config.context_length,
         config.context_length,

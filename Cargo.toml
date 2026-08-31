@@ -11,3 +11,6 @@ members = [
     "ch03/multi-head-attention",
     "ch04/basic_llm", "ch04/transformer-block", "ch04/llm-helpers", "ch04/full_model", "ch04/generate-text", "ch05/eval_model", "ch03/attention-helpers", "ch05/calculate-loss", "ch05/train-helpers", "ch05/optimize-llm",
 ]
+
+[profile.dev]
+opt-level = 1

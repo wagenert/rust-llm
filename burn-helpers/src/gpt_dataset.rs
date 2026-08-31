@@ -113,6 +113,7 @@ impl<B: Backend> Batcher<B, GptItem, GptBatch<B>> for GptBatcher {
 
 pub fn create_dataloader<B: Backend>(
     txt: &str,
+    tokenizer: &tiktoken::CoreBpe,
     batch_size: usize,
     max_length: usize,
     stride: usize,
@@ -120,7 +121,6 @@ pub fn create_dataloader<B: Backend>(
     num_workers: usize,
     device: &B::Device,
 ) -> Arc<dyn DataLoader<B, GptBatch<B>>> {
-    let tokenizer = tiktoken::get_encoding("gpt2").expect("Failed to get encoding");
     let dataset = Arc::new(GptDataset::create(txt, &tokenizer, max_length, stride));
     // let strategy = Box::new(FixBatchStrategy::<u32>::new(batch_size));
 

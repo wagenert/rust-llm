@@ -325,6 +325,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
+name = "base64"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
+
+[[package]]
 name = "base64ct"
 version = "1.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -435,6 +441,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5bd439b48f5425c9f4597141b52476358e05e08471bc30f4d1c2a1f4084d7c9f"
 dependencies = [
  "accelerate-src",
+ "openblas-src",
 ]
 
 [[package]]
@@ -848,6 +855,7 @@ dependencies = [
  "matrixmultiply",
  "ndarray 0.17.2",
  "num-traits",
+ "openblas-src",
  "paste",
  "portable-atomic",
  "portable-atomic-util",
@@ -1084,7 +1092,7 @@ version = "0.2.0"
 dependencies = [
  "burn",
  "burn-helpers",
- "tiktoken 3.5.1",
+ "tiktoken 4.1.2",
 ]
 
 [[package]]
@@ -4505,6 +4513,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "openblas-build"
+version = "0.10.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb9c85e9e7dd5acdc67b9f3f0c99656b550df716bc63540c6a224a920754a5c2"
+dependencies = [
+ "anyhow",
+ "cc",
+ "flate2",
+ "tar",
+ "thiserror 2.0.19",
+ "ureq 3.4.0",
+]
+
+[[package]]
+name = "openblas-src"
+version = "0.10.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1a81a5e467f1861ad6ac32d5ec1690ad097d19854753b7424250fe27da46b98"
+dependencies = [
+ "dirs",
+ "openblas-build",
+ "pkg-config",
+ "vcpkg",
+]
+
+[[package]]
 name = "optimize-llm"
 version = "0.1.0"
 dependencies = [
@@ -6597,7 +6631,7 @@ dependencies = [
  "libc",
  "serde",
  "serde_json",
- "ureq",
+ "ureq 2.12.1",
  "zip 0.6.6",
 ]
 
@@ -6984,6 +7018,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "ureq"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "972d7902c8735f2695410b8aed7df6ed12a47394aa1c8d7af49f0497b731a94d"
+dependencies = [
+ "base64 0.23.1",
+ "log",
+ "percent-encoding",
+ "rustls",
+ "rustls-pki-types",
+ "ureq-proto",
+ "utf8-zero",
+ "webpki-roots 1.0.9",
+]
+
+[[package]]
+name = "ureq-proto"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da5f78b09e6941e1a0f2e30e695e4b120377b54d5e0aec11b594bb57b3971613"
+dependencies = [
+ "base64 0.23.1",
+ "http",
+ "httparse",
+ "log",
+]
+
+[[package]]
 name = "url"
 version = "2.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6994,6 +7056,12 @@ dependencies = [
  "percent-encoding",
  "serde",
 ]
+
+[[package]]
+name = "utf8-zero"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8c0a043c9540bae7c578c88f91dda8bd82e59ae27c21baca69c8b191aaf5a6e"
 
 [[package]]
 name = "utf8_iter"
