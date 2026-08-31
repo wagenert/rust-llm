@@ -5,14 +5,15 @@ use burn::nn::loss::CrossEntropyLossConfig;
 use burn::optim::adaptor::OptimizerAdaptor;
 use burn::optim::{AdamW, AdamWConfig, GradientsParams, Optimizer};
 use burn::prelude::*;
-use burn::tensor::DType;
 use burn::tensor::backend::{AutodiffBackend, BackendTypes};
 use burn::{backend::Autodiff, data::dataloader::DataLoader};
 use burn_helpers::{GptBatch, GptConfig, GptModel, create_dataloader};
 use std::{fs, sync::Arc};
 use tiktoken::CoreBpe;
+use train_helpers::TextTokenConverter;
+use train_helpers::generate_text_simple;
 
-type InnerBackend = Flex<f32, i32>;
+type InnerBackend = Wgpu<f32, i32>;
 type OptimizeBackend = Autodiff<InnerBackend>;
 
 const FILEPATH: &str = "data/The_Verdict.txt";
@@ -76,7 +77,7 @@ fn train_model_simple<B: AutodiffBackend>(
             let grads_params = GradientsParams::from_grads(grads, &model);
             model = optimizer.step(0.0001, model, grads_params);
 
-            tokens_seen += batch.input_ids.num_params();
+            tokens_seen += batch.input_ids.shape().num_elements();
             global_step += 1;
             let (train_loss, val_loss) = evaluate_model(
                 &model,
@@ -120,18 +121,14 @@ fn generate_and_print_sample<B: AutodiffBackend>(
     start_context: &str,
 ) {
     let eval_model = model.valid();
-    let input_ids = tokenizer.encode(start_context);
-    let input_tensor: burn::tensor::Tensor<B::InnerBackend, 2, Int> =
-        burn::tensor::Tensor::<B::InnerBackend, 1, Int>::from_data(input_ids.as_slice(), device).unsqueeze_dim::<2>(0);
-    let output = eval_model.forward(input_tensor);
-    // println!("Output shape {:?}", output.shape());
-    let generated_ids = output.clone().argmax(output.dims().len() - 1);
-    let generated_text = tokenizer.decode(&generated_ids.to_data().convert_dtype(DType::U32).as_slice().unwrap());
+    let context_size = model.get_context_size();
+    let text_to_token_converter = TextTokenConverter::new("gpt2");
+    let input_tensor = text_to_token_converter.text_to_token_ids(start_context, device);
+    let generated_ids = generate_text_simple(&eval_model, input_tensor, 50, context_size as u32);
+    let generated_text = text_to_token_converter.token_ids_to_text(generated_ids).unwrap();
     println!(
-        "Generated sample: {} {}",
-        start_context,
-        String::from_utf8(generated_text)
-            .unwrap()
+        "Generated sample: {}",
+        generated_text
             .replace("\r\n", " ")
             .replace("\n", " ")
             .replace("\r", " ")
@@ -195,10 +192,7 @@ fn main() {
         start_context,
         tokenizer,
     );
-    /*
-    let train_loss = calc_loss_loader(train_loader, &model, &device, None);
-    println!("Training loss: {}", train_loss);
-    let val_loss = calc_loss_loader(val_loader, &model, &device, None);
-    println!("Validation loss: {}", val_loss);
-    */
+    println!("Train losses: {train_losses:?}");
+    println!("Val losses: {val_losses:?}");
+    println!("Tokens seen {tokens_seen:?}");
 }

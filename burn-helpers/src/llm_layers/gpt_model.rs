@@ -51,4 +51,8 @@ impl<B: Backend> GptModel<B> {
         let x = self.final_norm.forward(x);
         self.out_head.forward(x)
     }
+
+    pub fn get_context_size(&self) -> usize {
+        self.pos_emb.weight.shape()[0]
+    }
 }
