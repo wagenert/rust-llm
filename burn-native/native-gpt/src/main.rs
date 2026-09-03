@@ -12,7 +12,12 @@ fn main() {
     let file = std::fs::read_to_string(FILENAME).expect("Failed to read file");
     let tokenizer = tiktoken::get_encoding("gpt2").expect("Unable to initiatlize tokenizer");
     let _input_tokens = tokenizer.encode(&file);
-    let device = <OptimizerBackend as BackendTypes>::Device::default();
-    OptimizerBackend::seed(&device, 123);
-    let _model = BurnModelConfig::new().init::<OptimizerBackend>(&device);
+    let device = <InnerBackend as BackendTypes>::Device::default();
+    crate::training::train::<OptimizerBackend>(
+        "artifacts",
+        &file,
+        &tokenizer,
+        TrainingConfig::new(BurnModelConfig::new().with_batch_size(256), AdamWConfig::new()),
+        &device,
+    );
 }
