@@ -4141,7 +4141,7 @@ name = "native-gpt"
 version = "0.1.0"
 dependencies = [
  "burn",
- "tiktoken 4.1.2",
+ "tiktoken",
 ]
 
 [[package]]
