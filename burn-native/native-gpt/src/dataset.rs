@@ -94,14 +94,14 @@ impl<B: Backend> Batcher<B, NativeGptItem, NativeGptBatch<B>> for NativeGptDataB
             .map(|item| &item.input_ids)
             .map(|inputs| TensorData::from(&inputs[..]).convert::<B::IntElem>())
             .map(|data| Tensor::<B, 1, Int>::from_data(data, device))
-            .map(|tensor| tensor.reshape([1, self.max_length]))
+            .map(|tensor| tensor.unsqueeze())
             .collect();
         let target_ids: Vec<Tensor<B, 2, Int>> = items
             .iter()
             .map(|item| &item.target_ids)
             .map(|targets| TensorData::from(&targets[..]).convert::<B::IntElem>())
             .map(|data| Tensor::<B, 1, Int>::from_data(data, device))
-            .map(|tensor| tensor.reshape([1, self.max_length]))
+            .map(|tensor| tensor.unsqueeze())
             .collect();
 
         let input_ids = Tensor::cat(input_ids, 0);

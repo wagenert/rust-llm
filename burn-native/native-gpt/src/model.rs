@@ -89,7 +89,7 @@ impl<B: Backend> BurnModel<B> {
         let output = self.forward(input);
         let loss = CrossEntropyLossConfig::new()
             .init(&output.device())
-            .forward(output.clone().flatten(0, 1), flat_targets.clone());
+            .forward(output.clone(), flat_targets.clone());
         ClassificationOutput::new(loss, output, flat_targets)
     }
 }

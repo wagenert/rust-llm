@@ -17,7 +17,7 @@ fn main() {
         "artifacts",
         &file,
         &tokenizer,
-        TrainingConfig::new(BurnModelConfig::new(), AdamWConfig::new()),
+        TrainingConfig::new(BurnModelConfig::new(), AdamWConfig::new()).with_batch_size(2),
         &device,
     );
 }
