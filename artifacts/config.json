@@ -1,0 +1,25 @@
+{
+  "model": {
+    "vocab_size": 50257,
+    "context_length": 1024,
+    "emb_dim": 768,
+    "n_heads": 12,
+    "n_layers": 12,
+    "drop_rate": 0.1,
+    "qkv_bias": false
+  },
+  "optimizer": {
+    "grad_clipping": null,
+    "beta_1": 0.9,
+    "beta_2": 0.999,
+    "epsilon": 0.00001,
+    "weight_decay": 0.0001,
+    "cautious_weight_decay": false,
+    "amsgrad": false
+  },
+  "learning_rate": 0.0001,
+  "batch_size": 1024,
+  "num_workers": 4,
+  "epochs": 10,
+  "seed": 42
+}
