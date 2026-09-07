@@ -51,6 +51,12 @@ impl NativeGptDataset {
 impl Index<usize> for NativeGptDataset {
     type Output = NativeGptItem;
     fn index(&self, index: usize) -> &Self::Output {
+        assert!(
+            index < self.items.len(),
+            "Index {} out of bounds for dataset of length {}",
+            index,
+            self.items.len()
+        );
         &self.items[index]
     }
 }
@@ -61,14 +67,18 @@ impl Dataset<NativeGptItem> for NativeGptDataset {
     }
 
     fn get(&self, index: usize) -> Option<NativeGptItem> {
-        self.items.get(index).cloned()
+        if index < self.len() {
+            Some(self.items[index].clone())
+        } else {
+            None
+        }
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct NativeGptBatch<B: Backend> {
     pub input_ids: Tensor<B, 2, Int>,
-    pub target_ids: Tensor<B, 1, Int>,
+    pub target_ids: Tensor<B, 2, Int>,
 }
 
 #[derive(Config, Default, Debug)]
@@ -86,11 +96,12 @@ impl<B: Backend> Batcher<B, NativeGptItem, NativeGptBatch<B>> for NativeGptDataB
             .map(|data| Tensor::<B, 1, Int>::from_data(data, device))
             .map(|tensor| tensor.reshape([1, self.max_length]))
             .collect();
-        let target_ids: Vec<Tensor<B, 1, Int>> = items
+        let target_ids: Vec<Tensor<B, 2, Int>> = items
             .iter()
             .map(|item| &item.target_ids)
             .map(|targets| TensorData::from(&targets[..]).convert::<B::IntElem>())
             .map(|data| Tensor::<B, 1, Int>::from_data(data, device))
+            .map(|tensor| tensor.reshape([1, self.max_length]))
             .collect();
 
         let input_ids = Tensor::cat(input_ids, 0);

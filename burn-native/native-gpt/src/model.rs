@@ -83,13 +83,14 @@ impl<B: Backend> BurnModel<B> {
     pub fn forward_classification(
         &self,
         input: Tensor<B, 2, Int>,
-        targets: Tensor<B, 1, Int>,
+        targets: Tensor<B, 2, Int>,
     ) -> ClassificationOutput<B> {
+        let flat_targets = targets.clone().flatten(0, 1);
         let output = self.forward(input);
         let loss = CrossEntropyLossConfig::new()
             .init(&output.device())
-            .forward(output.clone(), targets.clone());
-        ClassificationOutput::new(loss, output, targets)
+            .forward(output.clone().flatten(0, 1), flat_targets.clone());
+        ClassificationOutput::new(loss, output, flat_targets)
     }
 }
 
