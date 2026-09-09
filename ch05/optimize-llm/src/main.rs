@@ -1,4 +1,3 @@
-use burn::backend::Flex;
 use burn::backend::wgpu::Wgpu;
 use burn::module::AutodiffModule;
 use burn::nn::loss::CrossEntropyLossConfig;
@@ -9,7 +8,6 @@ use burn::tensor::backend::{AutodiffBackend, BackendTypes};
 use burn::{backend::Autodiff, data::dataloader::DataLoader};
 use burn_helpers::{GptBatch, GptConfig, GptModel, create_dataloader};
 use std::{fs, sync::Arc};
-use tiktoken::CoreBpe;
 use train_helpers::TextTokenConverter;
 use train_helpers::generate_text_simple;
 
@@ -57,10 +55,10 @@ fn train_model_simple<B: AutodiffBackend>(
     optimizer: OptimizerAdaptor<AdamW, GptModel<B>, B>,
     device: &B::Device,
     num_epochs: usize,
-    eval_freq: usize,
+    // eval_freq: usize,
     eval_iter: usize,
     start_context: &str,
-    tokenizer: &CoreBpe,
+    // tokenizer: &CoreBpe,
 ) -> (Vec<f32>, Vec<f32>, Vec<usize>) {
     let mut model = GptModel::<B>::clone(model);
     let mut optimizer = optimizer.clone();
@@ -97,7 +95,11 @@ fn train_model_simple<B: AutodiffBackend>(
                 val_loss
             );
         }
-        generate_and_print_sample(&model, tokenizer, device, start_context);
+        generate_and_print_sample(
+            &model, //tokenizer,
+            device,
+            start_context,
+        );
     }
     (train_losses, val_losses, track_tokens_seen)
 }
@@ -116,7 +118,7 @@ fn evaluate_model<B: AutodiffBackend>(
 
 fn generate_and_print_sample<B: AutodiffBackend>(
     model: &GptModel<B>,
-    tokenizer: &CoreBpe,
+    //tokenizer: &CoreBpe,
     device: &B::Device,
     start_context: &str,
 ) {
@@ -177,7 +179,7 @@ fn main() {
         .init::<OptimizeBackend, GptModel<OptimizeBackend>>();
 
     let num_epochs = 10;
-    let eval_freq = 5;
+    //let eval_freq = 5;
     let eval_iter = 5;
     let start_context = "Every effort moves you";
     let (train_losses, val_losses, tokens_seen) = train_model_simple(
@@ -187,10 +189,10 @@ fn main() {
         optimizer,
         &device,
         num_epochs,
-        eval_freq,
+        //eval_freq,
         eval_iter,
         start_context,
-        tokenizer,
+        //tokenizer,
     );
     println!("Train losses: {train_losses:?}");
     println!("Val losses: {val_losses:?}");

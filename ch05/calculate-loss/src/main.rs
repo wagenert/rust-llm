@@ -1,5 +1,5 @@
 use burn::backend::Autodiff;
-use burn::backend::{Flex, wgpu::Wgpu};
+use burn::backend::wgpu::Wgpu;
 use burn::data::dataloader::DataLoader;
 use burn::nn::loss::CrossEntropyLossConfig;
 use burn::prelude::*;
