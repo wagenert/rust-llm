@@ -8,7 +8,7 @@ use burn::{
 #[derive(Clone, Debug)]
 pub struct NativeGptItem {
     input_ids: Vec<u32>,
-    target_ids: Vec<u32>,
+    pub target_ids: Vec<u32>,
 }
 
 #[derive(Clone, Debug)]

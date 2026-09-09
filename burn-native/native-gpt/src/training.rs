@@ -5,6 +5,7 @@ use crate::dataset::NativeGptDataset;
 use crate::{NativeGptDataBatcher, model::BurnModelConfig};
 use burn::prelude::*;
 use burn::record::CompactRecorder;
+
 use burn::train::metric::{AccuracyMetric, LossMetric};
 use burn::train::{Learner, SupervisedTraining};
 use burn::{config::Config, data::dataloader::DataLoaderBuilder, optim::AdamWConfig, tensor::backend::AutodiffBackend};
