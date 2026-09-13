@@ -9,5 +9,5 @@ type B = Wgpu<f32, i32>;
 
 fn main() {
     let device = <B as BackendTypes>::Device::default();
-    let model = Model::init(&device);
+    let model: Model<B> = Model::new(&device);
 }
