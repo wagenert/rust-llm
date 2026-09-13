@@ -2,3 +2,4 @@ target/
 artifacts/
 .DS_Store
 *.safetensors
+*.onnx
