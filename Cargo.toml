@@ -20,7 +20,7 @@ members = [
     "ch05/train-helpers",
     "ch05/optimize-llm",
     "burn-native/native-gpt",
-    "burn-native/load-llm",
+    "burn-native/load-llm", "burn-native/load-from-safetensors",
 ]
 
 [profile.dev]
