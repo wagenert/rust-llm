@@ -1,38 +1,40 @@
 use burn::prelude::*;
 use burn::tensor::backend::BackendTypes;
-use burn_helpers::GptConfig;
-use burn_helpers::GptModel;
-use burn_helpers::TextTokenConverter;
-use burn_helpers::generate_text_simple;
 use burn_store::ModuleSnapshot;
-use burn_store::ModuleStore;
+use burn_store::PyTorchToBurnAdapter;
 use burn_store::SafetensorsStore;
+use gpt_helpers::BurnModel;
+use gpt_helpers::BurnModelConfig;
+use gpt_helpers::TextTokenConverter;
+use gpt_helpers::generate_text_simple;
 
 const MODEL_PATH: &str = "data/model.safetensors";
 
 type WgpuBackend = burn::backend::wgpu::Wgpu<f32, i32>;
 
-fn load_my_model<B: Backend>(model_path: &str, device: &B::Device) -> GptModel<B> {
-    let config = GptConfig::new().with_qkv_bias(true);
-    let mut model = GptModel::<B>::new(&config, device);
-    let mut store = SafetensorsStore::from_file(model_path).allow_partial(true);
-    /*let metadata = store.get_all_snapshots().expect("Unable to read snapshots from store.");
-    println!("Metadata from the store: {:?}", metadata.keys());
-    if let Ok(keys) = store.keys() {
-        println!("Keys in the store: {:?}", keys);
-    } else {
-        println!("Failed to retrieve keys from the store.");
+fn load_my_model<B: Backend>(model_path: &str, device: &B::Device) -> BurnModel<B> {
+    let config = BurnModelConfig::new().with_qkv_bias(true);
+    let mut model = config.init::<B>(device);
+    let store = SafetensorsStore::from_file(model_path).with_from_adapter(PyTorchToBurnAdapter);
+    let mut remapped_store = store
+        .with_key_remapping(r"wte", "token_embedding")
+        .with_key_remapping(r"wpe", r"positional_embedding")
+        .with_key_remapping(r"\.h\.(\d+)\.", r".transformer_block.\1.");
+    //.with_key_remapping(r"ln_f", r"output_layer");
+    match model.load_from(&mut remapped_store) {
+        Ok(apply_result) => println!("Success: {apply_result}"),
+        Err(e) => {
+            println!("{e}");
+            panic!("Error loading model");
+        }
     }
-    */
-    let apply_result = model
-        .load_from(&mut store)
-        .expect("Failed to load model from safetensors");
     model
 }
 
 fn main() {
-    let model = load_my_model::<WgpuBackend>(MODEL_PATH, &<WgpuBackend as BackendTypes>::Device::default());
     let device = <WgpuBackend as BackendTypes>::Device::default();
+    let model = load_my_model::<WgpuBackend>(MODEL_PATH, &device);
+
     let token_converter = TextTokenConverter::new("gpt2");
     let input_ids = token_converter.text_to_token_ids::<WgpuBackend>("Every step moves you", &device);
     let output = generate_text_simple(&model, input_ids, 50, 1024);

@@ -3,7 +3,6 @@ use burn::prelude::*;
 use burn::record::FullPrecisionSettings;
 use burn::record::NamedMpkFileRecorder;
 use burn::tensor::backend::BackendTypes;
-use burn_store::SafetensorsStore;
 use clap::Parser;
 use gpt_helpers::{BurnModel, BurnModelConfig};
 use save_model_to_safetensor::parser::Cli;
@@ -18,7 +17,7 @@ fn main() {
     let model: BurnModel<B> = BurnModelConfig::new().init(&device);
 
     let recorder = NamedMpkFileRecorder::<FullPrecisionSettings>::new();
-    let model = model
+    let _model = model
         .load_file(cli.input_file, &recorder, &device)
         .expect("Can not load state from file");
 }
