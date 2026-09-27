@@ -1,5 +1,5 @@
 target/
-artifacts/
+artifacts*/
 .DS_Store
 *.safetensors
 *.onnx
