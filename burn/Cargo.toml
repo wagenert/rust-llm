@@ -6,7 +6,6 @@ members = [
     "ch02/byte-pair-encoding",
     "ch03/casual-attention",
     "ch03/context-vectors",
-    "tensor-test",
     "ch02/text-embedding",
     "ch03/multi-head-attention",
     "ch04/basic_llm",
@@ -20,7 +19,10 @@ members = [
     "ch05/train-helpers",
     "ch05/optimize-llm",
     "burn-native/native-gpt",
-    "burn-native/load-llm", "burn-native/load-from-safetensors", "burn-native/save-model-to-safetensor", "burn-native/gpt-helpers",
+    "burn-native/load-llm",
+    "burn-native/load-from-safetensors",
+    "burn-native/save-model-to-safetensor",
+    "burn-native/gpt-helpers",
 ]
 
 [profile.dev]
