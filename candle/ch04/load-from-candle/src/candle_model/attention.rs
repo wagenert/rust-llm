@@ -1,7 +1,7 @@
 use candle_core::Tensor;
 use candle_nn::VarBuilder;
 
-use crate::candle_model::{attention, linear::Gpt2Linear};
+use crate::candle_model::linear::Gpt2Linear;
 
 pub struct Gpt2Attention {
     c_proj: Gpt2Linear,
