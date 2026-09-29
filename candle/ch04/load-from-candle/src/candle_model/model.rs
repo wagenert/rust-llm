@@ -18,8 +18,8 @@ impl Gpt2Model {
         
         let transformer_block_weights = vb.set_prefix("h");
         let mut h = Vec::with_capacity(n_heads);
-        for _i in 0..n_heads {
-            let transformer_block = Gpt2Block::new(n_heads, n_embed, transformer_block_weights.pp("{i}"))?;
+        for i in 0..n_heads {
+            let transformer_block = Gpt2Block::new(n_heads, n_embed, transformer_block_weights.pp(format!("{i}")))?;
             h.push(transformer_block);
         }
         let model = Self {
