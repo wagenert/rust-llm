@@ -36,7 +36,8 @@ impl<'a> TextTokenConverter<'a> {
 
     pub fn text_to_token_ids(&self, text: &str) -> candle_core::Result<Tensor> {
         let encoded = self.tokenizer.encode_with_special_tokens(text);
-        let encoded_tensor = Tensor::from_vec(encoded, 1, &Device::Cpu)?;
+        let len = encoded.len();
+        let encoded_tensor = Tensor::from_vec(encoded, len, &Device::Cpu)?;
         Ok(encoded_tensor)
     }
 
