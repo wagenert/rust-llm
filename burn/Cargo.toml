@@ -18,11 +18,6 @@ members = [
     "ch05/calculate-loss",
     "ch05/train-helpers",
     "ch05/optimize-llm",
-    "burn-native/native-gpt",
-    "burn-native/load-llm",
-    "burn-native/load-from-safetensors",
-    "burn-native/save-model-to-safetensor",
-    "burn-native/gpt-helpers",
 ]
 
 [profile.dev]
