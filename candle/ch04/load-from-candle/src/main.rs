@@ -1,7 +1,8 @@
 use candle_core::Device;
 use candle_nn::VarBuilder;
-use load_from_candle::{Gpt2Model, TextTokenConverter, generate_text_simple};
-use std::fs;
+use load_from_candle::{Gpt2Config, Gpt2Model, TextTokenConverter};
+use std::fs::File;
+use std::io::BufReader;
 
 #[tokio::main]
 async fn main() -> hf_hub::HFResult<()> {
@@ -24,8 +25,10 @@ async fn main() -> hf_hub::HFResult<()> {
     // 4. Read the configuration file (optional, but needed to build the model structure)
     println!("Weights cached at: {:?}", weights_path);
 
-    let config_str = fs::read_to_string(config_path)?;
-    println!("Config content: {}", config_str);
+    let file = File::open(config_path)?;
+    let config_reader = BufReader::new(file);
+    let config: Gpt2Config = serde_json::from_reader(config_reader)?;
+    println!("Read config from file: {config:?}");
 
     // 5. Use VarBuilder to safely load the SafeTensors weights into the device
     // This handles mapping the file structures into Candle tensors automatically
@@ -38,28 +41,33 @@ async fn main() -> hf_hub::HFResult<()> {
 
     // You can now pass `vb` and your parsed config into your model structure!
     // Example: let model = MyModel::new(&config, vb)?;
-    let n_heads = 12;
-    let n_embed = 768;
-    if let Ok(model) = Gpt2Model::new(n_heads, n_embed, vb) {
-        println!("Successfully initialized model.");
-        let input_text = "Every step moves you";
-        let text_token_converter = TextTokenConverter::new("gpt2");
-        if let Ok(input_ids) = text_token_converter.text_to_token_ids(input_text) {
-            if let Ok(output_ids) = generate_text_simple(&model, input_ids, 50, 768) {
-                if let Ok(output_text) = text_token_converter.token_ids_to_text(output_ids) {
-                    println!("Input {input_text}");
-                    println!("Output {output_text}");
-                } else {
-                    panic!("Can not decode output ids");
-                }
-            } else {
-                panic!("Can not generate text");
+    match Gpt2Model::new(&config, vb) {
+        Ok(model) => {
+            println!("Successfully initialized model.");
+            let input_text = "Every step moves you";
+            let text_token_converter = TextTokenConverter::new("gpt2");
+            match text_token_converter.text_to_token_ids(input_text) {
+                Ok(input_ids) => {
+                    println!("Successfully encoded text {input_ids}");
+                    match model.forward(&input_ids) {
+                        Ok(output_ids) =>  {
+                            println!("Successfully created output ids {output_ids:?}");
+                            if let Ok(output_text) = text_token_converter.token_ids_to_text(output_ids) {
+                                println!("Input {input_text}");
+                                println!("Output {output_text}");
+                            } else {
+                                panic!("Can not decode output ids");
+                            }
+                        },
+                        Err(e) => {
+                            println!("Can not generate text. Error {e}");
+                        }
+                    }
+                },
+                Err(e) => println!("Can not encode input text. Error {e}")
             }
-        } else {
-            panic!("Can not encode input text");
         }
-    } else {
-        panic!("Can not initialize model");
+        Err(e) => println!("Can not create model. Error {e}"),
     }
 
     Ok(())

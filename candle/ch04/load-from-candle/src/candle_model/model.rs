@@ -1,7 +1,7 @@
 use candle_core::{Tensor, Module};
 use candle_nn::{Embedding, LayerNorm, VarBuilder, embedding, layer_norm};
 
-use crate::candle_model::transformer::Gpt2Block;
+use crate::{Gpt2Config, candle_model::transformer::Gpt2Block};
 
 pub struct Gpt2Model {
     wte: Embedding,
@@ -11,15 +11,15 @@ pub struct Gpt2Model {
 }
 
 impl Gpt2Model {
-    pub fn new(n_heads: usize, n_embed: usize, vb: VarBuilder) -> candle_core::Result<Self> {
+    pub fn new(cfg: &Gpt2Config, vb: VarBuilder) -> candle_core::Result<Self> {
         let wte = embedding(50257, 768, vb.pp("wte"))?;
         let wpe = embedding(1024, 768, vb.pp("wpe"))?;
         let ln_f = layer_norm(768, 1e-5 , vb.pp("ln_f"))?;
         
         let transformer_block_weights = vb.set_prefix("h");
-        let mut h = Vec::with_capacity(n_heads);
-        for i in 0..n_heads {
-            let transformer_block = Gpt2Block::new(n_heads, n_embed, transformer_block_weights.pp(format!("{i}")))?;
+        let mut h = Vec::with_capacity(cfg.n_head);
+        for i in 0..cfg.n_head {
+            let transformer_block = Gpt2Block::new(cfg.n_embd, transformer_block_weights.pp(format!("{i}")))?;
             h.push(transformer_block);
         }
         let model = Self {
@@ -32,7 +32,7 @@ impl Gpt2Model {
     }
 
     pub fn forward(&self, input_ids: &Tensor) -> candle_core::Result<Tensor> {
-        let seq_len = input_ids.dim(1)?;
+        let seq_len = input_ids.dim(0)?;
         
         // 1. Token embeddings
         let tok_emb = self.wte.forward(input_ids)?;
