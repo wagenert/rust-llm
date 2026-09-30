@@ -1,6 +1,6 @@
 use candle_core::Device;
 use candle_nn::VarBuilder;
-use load_from_candle::{Gpt2Config, Gpt2Model, TextTokenConverter};
+use load_from_candle::{Gpt2Config, Gpt2Model, TextTokenConverter, generate_text_simple};
 use std::fs::File;
 use std::io::BufReader;
 
@@ -48,10 +48,8 @@ async fn main() -> hf_hub::HFResult<()> {
             let text_token_converter = TextTokenConverter::new("gpt2");
             match text_token_converter.text_to_token_ids(input_text) {
                 Ok(input_ids) => {
-                    println!("Successfully encoded text {input_ids}");
-                    match model.forward(&input_ids) {
+                    match generate_text_simple(&model, input_ids, 50, 4 as u32) {
                         Ok(output_ids) =>  {
-                            println!("Successfully created output ids {output_ids:?}");
                             if let Ok(output_text) = text_token_converter.token_ids_to_text(output_ids) {
                                 println!("Input {input_text}");
                                 println!("Output {output_text}");

@@ -18,8 +18,10 @@ impl Gpt2Linear {
     }
 
     pub fn forward(&self, x: &Tensor) -> candle_core::Result<Tensor> {
-        //let w = self.weights.t()?;
-        let w = &self.weights;
-        x.matmul(&w)?.broadcast_add(&self.bias)
+        let (batch, seq_len, in_features) = x.dims3()?;
+        let x = x.reshape((batch * seq_len, in_features))?;
+        let y = x.matmul(&self.weights)?.broadcast_add(&self.bias)?;
+        let out_features = self.weights.dim(1)?;
+        y.reshape((batch, seq_len, out_features))
     }
 }

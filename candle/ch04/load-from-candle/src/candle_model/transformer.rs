@@ -1,7 +1,7 @@
 use candle_core::Tensor;
 use candle_nn::{LayerNorm, Module, VarBuilder, layer_norm};
 
-use crate::candle_model::{attention::Gpt2Attention, mlp::Gpt2Mlp};
+use crate::{Gpt2Config, candle_model::{attention::Gpt2Attention, mlp::Gpt2Mlp}};
 
 pub struct Gpt2Block {
     ln_1: LayerNorm,
@@ -11,11 +11,11 @@ pub struct Gpt2Block {
 }
 
 impl Gpt2Block {
-    pub fn new(n_embed: usize, vb: VarBuilder) -> candle_core::Result<Self> {
-        let layer_norm_1 = layer_norm(768, 1e-5, vb.pp("ln_1"))?;
-        let layer_norm_2 = layer_norm(768, 1e-5, vb.pp("ln_2"))?;
-        let attention = Gpt2Attention::new(n_embed, vb.pp("attn"))?;
-        let mlp = Gpt2Mlp::new(n_embed, vb.pp("mlp"))?;
+    pub fn new(cfg: &Gpt2Config, vb: VarBuilder) -> candle_core::Result<Self> {
+        let layer_norm_1 = layer_norm(cfg.n_embd, cfg.layer_norm_epsilon, vb.pp("ln_1"))?;
+        let layer_norm_2 = layer_norm(cfg.n_embd, cfg.layer_norm_epsilon, vb.pp("ln_2"))?;
+        let attention = Gpt2Attention::new(cfg, vb.pp("attn"))?;
+        let mlp = Gpt2Mlp::new(cfg.n_embd, vb.pp("mlp"))?;
         let model = Self {
             ln_1: layer_norm_1,
             ln_2: layer_norm_2,

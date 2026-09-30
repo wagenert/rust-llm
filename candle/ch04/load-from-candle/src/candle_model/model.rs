@@ -19,7 +19,7 @@ impl Gpt2Model {
         let transformer_block_weights = vb.set_prefix("h");
         let mut h = Vec::with_capacity(cfg.n_head);
         for i in 0..cfg.n_head {
-            let transformer_block = Gpt2Block::new(cfg.n_embd, transformer_block_weights.pp(format!("{i}")))?;
+            let transformer_block = Gpt2Block::new(cfg, transformer_block_weights.pp(format!("{i}")))?;
             h.push(transformer_block);
         }
         let model = Self {
@@ -33,9 +33,10 @@ impl Gpt2Model {
 
     pub fn forward(&self, input_ids: &Tensor) -> candle_core::Result<Tensor> {
         let seq_len = input_ids.dim(0)?;
+        let input_ids = input_ids.unsqueeze(0)?;
         
         // 1. Token embeddings
-        let tok_emb = self.wte.forward(input_ids)?;
+        let tok_emb = self.wte.forward(&input_ids)?;
         
         // 2. Generate position indices [0, 1, ..., seq_len-1]
         let pos = Tensor::arange(0u32, seq_len as u32, input_ids.device())?;
@@ -50,6 +51,11 @@ impl Gpt2Model {
         }
         
         // 5. Final Layer Normalization
-        self.ln_f.forward(&x)
+        let x = self.ln_f.forward(&x)?;
+        let x = x.squeeze(0)?;
+
+        // 6. Projektion auf die Vokabulargröße [batch, seq_len, vocab_size]
+        let x = x.matmul(&self.wte.embeddings().transpose(0,1)?)?;
+        x.unsqueeze(0)
     }
 }
