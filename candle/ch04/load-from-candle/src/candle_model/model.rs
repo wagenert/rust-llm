@@ -12,9 +12,9 @@ pub struct Gpt2Model {
 
 impl Gpt2Model {
     pub fn new(cfg: &Gpt2Config, vb: VarBuilder) -> candle_core::Result<Self> {
-        let wte = embedding(50257, 768, vb.pp("wte"))?;
-        let wpe = embedding(1024, 768, vb.pp("wpe"))?;
-        let ln_f = layer_norm(768, 1e-5 , vb.pp("ln_f"))?;
+        let wte = embedding(cfg.vocab_size, cfg.n_embd, vb.pp("wte"))?;
+        let wpe = embedding(cfg.n_ctx, cfg.n_embd, vb.pp("wpe"))?;
+        let ln_f = layer_norm(cfg.n_embd, cfg.layer_norm_epsilon , vb.pp("ln_f"))?;
         
         let transformer_block_weights = vb.set_prefix("h");
         let mut h = Vec::with_capacity(cfg.n_head);
