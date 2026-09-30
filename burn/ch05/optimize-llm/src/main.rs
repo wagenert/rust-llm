@@ -139,11 +139,7 @@ fn generate_and_print_sample<B: AutodiffBackend>(
 
 fn main() {
     let text = fs::read_to_string(FILEPATH).expect("Can not read file content");
-    // let total_characters = text.len();
     let tokenizer = tiktoken::get_encoding("gpt2").expect("Can not initialize tokenizer");
-    // let total_tokens = tokenizer.encode(&text);
-    // println!("Total characters: {}", total_characters);
-    // println!("Total tokens: {}", total_tokens.len());
     let device = <OptimizeBackend as BackendTypes>::Device::default();
     OptimizeBackend::seed(&device, 123);
 
@@ -179,7 +175,6 @@ fn main() {
         .init::<OptimizeBackend, GptModel<OptimizeBackend>>();
 
     let num_epochs = 10;
-    //let eval_freq = 5;
     let eval_iter = 5;
     let start_context = "Every effort moves you";
     let (train_losses, val_losses, tokens_seen) = train_model_simple(
@@ -189,10 +184,8 @@ fn main() {
         optimizer,
         &device,
         num_epochs,
-        //eval_freq,
         eval_iter,
         start_context,
-        //tokenizer,
     );
     println!("Train losses: {train_losses:?}");
     println!("Val losses: {val_losses:?}");

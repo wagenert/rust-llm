@@ -14,7 +14,6 @@ fn main() {
     let args = Cli::parse();
     let file = std::fs::read_to_string(FILENAME).expect("Failed to read file");
     let tokenizer = tiktoken::get_encoding("gpt2").expect("Unable to initiatlize tokenizer");
-    let _input_tokens = tokenizer.encode(&file);
     let device = <InnerBackend as BackendTypes>::Device::default();
     match args.command {
         native_gpt::Commands::Train { output_path } => {
