@@ -1,8 +1,8 @@
-use crate::BurnModel;
+use crate::Gpt2Model;
 use burn::prelude::*;
 
 pub fn generate_text_simple<B: Backend>(
-    model: &BurnModel<B>,
+    model: &Gpt2Model<B>,
     idx: Tensor<B, 2, Int>,
     max_new_tokens: usize,
     context_size: u32,

@@ -1,6 +1,6 @@
 use burn::module::Module;
 use burn::nn::loss::CrossEntropyLossConfig;
-use burn::nn::modules::transformer::{TransformerEncoder, TransformerEncoderConfig};
+use burn::nn::modules::transformer::TransformerEncoderConfig;
 use burn::nn::transformer::TransformerEncoderInput;
 use burn::nn::{Dropout, DropoutConfig, Embedding, EmbeddingConfig, LayerNorm, LayerNormConfig, Linear, LinearConfig};
 use burn::prelude::*;
@@ -8,15 +8,16 @@ use burn::tensor::backend::AutodiffBackend;
 use burn::train::{ClassificationOutput, InferenceStep, TrainOutput, TrainStep};
 
 use crate::NativeGptBatch;
+use crate::transformer::{TransformerBlock, TransformerBlockConfig};
 
 #[derive(Config, Debug)]
-pub struct BurnModelConfig {
+pub struct Gpt2ModelConfig {
     #[config(default = 50257)]
     pub vocab_size: usize,
     #[config(default = 1024)]
     pub context_length: usize,
     #[config(default = 768)]
-    pub emb_dim: usize,
+    pub n_embed: usize,
     #[config(default = 12)]
     pub n_heads: usize,
     #[config(default = 12)]
@@ -25,41 +26,49 @@ pub struct BurnModelConfig {
     pub drop_rate: f64,
     #[config(default = false)]
     pub qkv_bias: bool,
+    #[config(default = 1e-5)]
+    pub layer_norm_epsilon: f64,
+    #[config(default = 1024)]
+    pub max_seq_len: usize,
 }
 
-impl BurnModelConfig {
-    pub fn init<B: Backend>(self, device: &B::Device) -> BurnModel<B> {
-        BurnModel::new(self, device)
+impl Gpt2ModelConfig {
+    pub fn init<B: Backend>(&self, device: &B::Device) -> Gpt2Model<B> {
+        Gpt2Model::new(self, device)
     }
 }
 
 #[derive(Debug, Module)]
-pub struct BurnModel<B: Backend> {
-    token_embedding: Embedding<B>,
-    positional_embedding: Embedding<B>,
+pub struct Gpt2Model<B: Backend> {
+    wte: Embedding<B>,
+    wpe: Embedding<B>,
     dropout: Dropout,
-    transformers: TransformerEncoder<B>,
-    final_norm: LayerNorm<B>,
-    output_layer: Linear<B>,
+    transformers: Vec<TransformerBlock<B>>,
+    ln_f: LayerNorm<B>,
+    lm_head: Linear<B>,
 }
 
-impl<B: Backend> BurnModel<B> {
-    pub fn new(config: BurnModelConfig, device: &B::Device) -> Self {
-        let token_embedding = EmbeddingConfig::new(config.vocab_size, config.emb_dim).init(device);
-        let positional_embedding = EmbeddingConfig::new(config.context_length, config.emb_dim).init(device);
+impl<B: Backend> Gpt2Model<B> {
+    pub fn new(config: &Gpt2ModelConfig, device: &B::Device) -> Self {
+        let wte = EmbeddingConfig::new(config.vocab_size, config.emb_dim).init(device);
+        let wpe = EmbeddingConfig::new(config.context_length, config.emb_dim).init(device);
         let dropout = DropoutConfig::new(config.drop_rate).init();
-        let transformers =
-            TransformerEncoderConfig::new(config.emb_dim, config.emb_dim, config.n_heads, config.n_layers).init(device);
-        let final_norm = LayerNormConfig::new(config.emb_dim).init(device);
-        let output_layer = LinearConfig::new(config.emb_dim, config.vocab_size).init(device);
+
+        let mut transformers = Vec::with_capacity(config.n_heads);
+        for _i in 0..config.n_heads {
+            let tranformer = TransformerBlockConfig::new(config).init(device);
+            transformers.push(tranformer);
+        }
+        let ln_f = LayerNormConfig::new(config.n_embed).init(device);
+        let lm_head = LinearConfig::new(config.n_embed, config.vocab_size).init(device);
 
         Self {
-            token_embedding,
-            positional_embedding,
+            wte,
+            wpe,
             dropout,
             transformers,
-            final_norm,
-            output_layer,
+            ln_f,
+            lm_head,
         }
     }
 
@@ -67,16 +76,16 @@ impl<B: Backend> BurnModel<B> {
         let input_shape = input.shape();
         let _batch_size = input_shape[0];
         let seq_length = input_shape[1];
-        let tok_embeds = self.token_embedding.forward(input.clone());
+        let tok_embeds = self.wte.forward(input.clone());
         let pos_input =
             Tensor::<B, 1, Int>::from_data(Vec::from_iter(0..seq_length).as_slice(), &input.device()).unsqueeze();
-        let pos_embeds = self.positional_embedding.forward(pos_input);
+        let pos_embeds = self.wpe.forward(pos_input);
         let x = tok_embeds + pos_embeds;
         let x = self.dropout.forward(x);
         let x = TransformerEncoderInput::new(x);
         let x = self.transformers.forward(x);
-        let x = self.final_norm.forward(x);
-        let x = self.output_layer.forward(x);
+        let x = self.ln_f.forward(x);
+        let x = self.lm_head.forward(x);
         x.flatten(0, 1)
     }
 
@@ -94,7 +103,7 @@ impl<B: Backend> BurnModel<B> {
     }
 }
 
-impl<B: AutodiffBackend> TrainStep for BurnModel<B> {
+impl<B: AutodiffBackend> TrainStep for Gpt2Model<B> {
     type Input = NativeGptBatch<B>;
     type Output = ClassificationOutput<B>;
 
@@ -104,7 +113,7 @@ impl<B: AutodiffBackend> TrainStep for BurnModel<B> {
     }
 }
 
-impl<B: Backend> InferenceStep for BurnModel<B> {
+impl<B: Backend> InferenceStep for Gpt2Model<B> {
     type Input = NativeGptBatch<B>;
     type Output = ClassificationOutput<B>;
 

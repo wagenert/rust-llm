@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 burn = { version = "0.21.0", features = ["std", "wgpu", "accelerate", "autodiff", "store"] }
 burn-store = { version = "0.21.0" }
-burn-helpers = { path = "../../burn-helpers" }
+gpt-helpers = { path = "../gpt-helpers"}
 
 [build-dependencies]
 burn-onnx = { version = "0.21.0" }
