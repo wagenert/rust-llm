@@ -18,7 +18,8 @@ impl Gpt2Linear {
     }
 
     pub fn forward(&self, x: &Tensor) -> candle_core::Result<Tensor> {
-        let w = self.weights.t()?;
+        //let w = self.weights.t()?;
+        let w = &self.weights;
         x.matmul(&w)?.broadcast_add(&self.bias)
     }
 }

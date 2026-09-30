@@ -10,6 +10,7 @@ pub fn generate_text_simple(
     max_new_tokens: usize,
     context_size: u32,
 ) -> candle_core::Result<Tensor> {
+    println!("Received tensor {idx}");
     let mut idx = idx.clone();
     for _ in 0..max_new_tokens {
         let idx_cond = idx.narrow(1, idx.dim(1)? - context_size as usize, idx.dim(1)?)?;

@@ -11,10 +11,10 @@ pub struct Gpt2Block {
 }
 
 impl Gpt2Block {
-    pub fn new(n_head: usize, n_embed: usize, vb: VarBuilder) -> candle_core::Result<Self> {
+    pub fn new(n_embed: usize, vb: VarBuilder) -> candle_core::Result<Self> {
         let layer_norm_1 = layer_norm(768, 1e-5, vb.pp("ln_1"))?;
         let layer_norm_2 = layer_norm(768, 1e-5, vb.pp("ln_2"))?;
-        let attention = Gpt2Attention::new(n_head, n_embed, vb.pp("attn"))?;
+        let attention = Gpt2Attention::new(n_embed, vb.pp("attn"))?;
         let mlp = Gpt2Mlp::new(n_embed, vb.pp("mlp"))?;
         let model = Self {
             ln_1: layer_norm_1,
