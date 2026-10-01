@@ -1,3 +1,4 @@
+use burn::prelude::*;
 use burn::nn::LayerNormConfig;
 use burn::{module::Module, nn::LayerNorm, tensor::backend::Backend};
 

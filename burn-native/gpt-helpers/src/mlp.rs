@@ -1,3 +1,4 @@
+use burn::prelude::*;
 use burn::{
     module::Module,
     nn::{Dropout, DropoutConfig, Gelu, Linear, LinearConfig},
