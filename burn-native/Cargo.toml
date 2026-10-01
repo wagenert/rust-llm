@@ -3,7 +3,7 @@ resolver = "3"
 members = [
     "native-gpt",
     "load-llm",
-    "gpt-helpers",
+    "gpt-helpers", "from-safe-tensors",
 ]
 
 [profile.dev]
