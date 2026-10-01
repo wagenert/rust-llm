@@ -6,12 +6,10 @@
         "${workspaceFolder}/ch04/**/Cargo.toml",
         "${workspaceFolder}/ch05/**/Cargo.toml",
     ],
-    "rust-analyzer.check.command": "check",
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.checkOnSave": true,
     "rust-analyzer.cachePriming.enable": false,
     "[rust]": {
-        "checkOnSave": {
-            "command": "check"
-        },
         "editor.defaultFormatter": "rust-lang.rust-analyzer",
         "editor.formatOnSave": true
     }
