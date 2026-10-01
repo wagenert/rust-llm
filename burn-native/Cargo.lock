@@ -2881,6 +2881,13 @@ dependencies = [
 [[package]]
 name = "from-safe-tensors"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "burn",
+ "gpt-helpers",
+ "memmap2",
+ "safetensors 0.8.0",
+]
 
 [[package]]
 name = "futures"
@@ -3758,6 +3765,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79cf5c93f93228cf8efb3ba362535fb11199ac548a09ce117c9b1adc3030d706"
 dependencies = [
  "rustversion",
+]
+
+[[package]]
+name = "infer-gpt2"
+version = "0.1.0"
+dependencies = [
+ "burn",
+ "gpt-helpers",
+ "tiktoken",
 ]
 
 [[package]]
@@ -6040,6 +6056,19 @@ dependencies = [
  "hashbrown 0.16.1",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "safetensors"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "79b079b829cb27a1c3c374341345ed2e8b2c0c839034522cee576c140bd7f846"
+dependencies = [
+ "hashbrown 0.16.1",
+ "libc",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]

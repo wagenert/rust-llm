@@ -11,10 +11,10 @@ pub fn generate_text_simple<B: Backend>(
     for _ in 0..max_new_tokens {
         let idx_cond = idx.clone().slice(s![.., (-(context_size as i32))..-1]);
         let logits = model.forward(idx_cond);
-        let logits = logits.slice(s![.., -1, ..]);
-        let probas = burn::tensor::activation::softmax(logits, 2);
-        let idx_next = probas.argmax(2).squeeze_dim(2);
-        idx = Tensor::cat(vec![idx, idx_next], 1);
+        let logits = logits.slice(s![-1, ..]);
+        let probas = burn::tensor::activation::softmax(logits, 1);
+        let idx_next = probas.argmax(1).squeeze_dim(1);
+        idx = Tensor::cat(vec![idx, idx_next], 0);
     }
     idx
 }
