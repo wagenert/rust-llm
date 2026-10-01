@@ -2,8 +2,8 @@ use burn::prelude::*;
 use burn::nn::LayerNormConfig;
 use burn::{module::Module, nn::LayerNorm, tensor::backend::Backend};
 
-use crate::attention::{CasualSelfAttention, CasualSelfAttentionConfig};
-use crate::mlp::{Mlp, MlpConfig};
+use crate::model::attention::{CasualSelfAttention, CasualSelfAttentionConfig};
+use crate::model::mlp::{Mlp, MlpConfig};
 use crate::Gpt2ModelConfig;
 
 #[derive(Debug)]

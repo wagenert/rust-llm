@@ -3,8 +3,8 @@ use burn::backend::wgpu::Wgpu;
 use burn::optim::AdamWConfig;
 use burn::tensor::backend::BackendTypes;
 use clap::Parser;
-use native_gpt::{BurnModelConfig, TrainingConfig, train};
-use native_gpt::{Cli, infer};
+use gpt_helpers::{Gpt2ModelConfig, TrainingConfig, train, infer};
+use native_gpt::Cli;
 
 type InnerBackend = Wgpu<f32, i32>;
 type OptimizerBackend = Autodiff<InnerBackend>;
@@ -21,7 +21,7 @@ fn main() {
                 &output_path,
                 &file,
                 &tokenizer,
-                TrainingConfig::new(BurnModelConfig::new(), AdamWConfig::new()).with_batch_size(2),
+                TrainingConfig::new(Gpt2ModelConfig::new().with_qkv_bias(true), AdamWConfig::new()).with_batch_size(2),
                 &device,
             );
         }

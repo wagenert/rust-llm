@@ -5,7 +5,7 @@ use burn::{
     tensor::backend::Backend,
 };
 
-use crate::transformer::TransformerBlockConfig;
+use crate::model::transformer::TransformerBlockConfig;
 
 #[derive(Debug)]
 pub struct MlpConfig {

@@ -17,7 +17,7 @@ pub fn load_tensor_map(path: impl AsRef<std::path::Path>) -> Result<TensorMap> {
         let data = tensor.data();
         let floats = match dtype {
                 safetensors::Dtype::F32 => {
-                    data.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect::<Vec<f32>>()
+                    data.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect()
                 },
                 _ => anyhow::bail!("Unsupported tensor dtype: {:?}", dtype),
         };

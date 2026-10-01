@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::NativeGptBatch;
 use crate::dataset::NativeGptDataset;
-use crate::{NativeGptDataBatcher, model::BurnModelConfig};
+use crate::{NativeGptDataBatcher, model::Gpt2ModelConfig};
 use burn::prelude::*;
 use burn::record::CompactRecorder;
 
@@ -12,7 +12,7 @@ use burn::{config::Config, data::dataloader::DataLoaderBuilder, optim::AdamWConf
 
 #[derive(Config, Debug)]
 pub struct TrainingConfig {
-    pub model: BurnModelConfig,
+    pub model: Gpt2ModelConfig,
     pub optimizer: AdamWConfig,
     #[config(default = 0.0001)]
     pub learning_rate: f64,

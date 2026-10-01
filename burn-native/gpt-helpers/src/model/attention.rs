@@ -1,7 +1,7 @@
 use burn::{nn::{Dropout, DropoutConfig, Linear, LinearConfig}, prelude::*, tensor::activation::softmax};
 
 
-use crate::transformer::TransformerBlockConfig;
+use crate::model::transformer::TransformerBlockConfig;
 
 #[derive(Debug)]
 pub struct CasualSelfAttentionConfig {
@@ -70,7 +70,7 @@ impl<B: Backend> CasualSelfAttention<B> {
         }
     }
 
-    pub fn forward(&self, input: Tensor<B, 3, Float>) -> Tensor<B, 3, Float> {
+    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
         let [batch_size, seq_length, _] = input.dims();
         // 1. Combined QKV projection
         // x: [B, T, n_embd]  →  qkv: [B, T, 3*n_embd]
@@ -78,8 +78,8 @@ impl<B: Backend> CasualSelfAttention<B> {
         let n_embd = self.n_head * self.head_dim;
         // Split along last dimension into Q, K, V each [B, T, n_embd]
         let q = qkv.clone().slice([0..batch_size, 0..seq_length, 0..n_embd]);
-        let k = qkv.clone().slice([0..batch_size, 0..seq_length, n_embd..2 * n_embd]);
-        let v = qkv.slice([0..batch_size, 0..seq_length, 2 * n_embd..3 * n_embd]);
+        let k = qkv.clone().slice([0..batch_size, 0..seq_length, n_embd..(2 * n_embd)]);
+        let v = qkv.slice([0..batch_size, 0..seq_length, (2 * n_embd)..(3 * n_embd)]);
         
         // 2. Reshape to multi-head form
         // [B, T, n_embd] → [B, T, n_head, head_dim] → [B, n_head, T, head_dim]
@@ -126,7 +126,7 @@ impl<B: Backend> CasualSelfAttention<B> {
 
     fn causal_mask(&self, seq_length: usize, device: &B::Device) -> Tensor<B, 4, Float> {
         let mut mask = Tensor::<B, 2, Float>::zeros([seq_length, seq_length], device);
-        let boolean_mask = Tensor::<B, 2, Bool>::triu_mask([seq_length, seq_length], 1, device);
+        let boolean_mask = Tensor::<B, 2, Bool>::tril_mask([seq_length, seq_length], 1, device);
         mask = mask.mask_fill(boolean_mask, f64::NEG_INFINITY);
         mask.unsqueeze::<4>()
     }
