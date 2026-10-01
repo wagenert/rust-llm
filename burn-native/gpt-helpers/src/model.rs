@@ -1,14 +1,12 @@
 use burn::module::Module;
 use burn::nn::loss::CrossEntropyLossConfig;
-use burn::nn::modules::transformer::TransformerEncoderConfig;
-use burn::nn::transformer::TransformerEncoderInput;
 use burn::nn::{Dropout, DropoutConfig, Embedding, EmbeddingConfig, LayerNorm, LayerNormConfig, Linear, LinearConfig};
 use burn::prelude::*;
 use burn::tensor::backend::AutodiffBackend;
 use burn::train::{ClassificationOutput, InferenceStep, TrainOutput, TrainStep};
 
-use crate::NativeGptBatch;
 use crate::transformer::{TransformerBlock, TransformerBlockConfig};
+use crate::NativeGptBatch;
 
 #[derive(Config, Debug)]
 pub struct Gpt2ModelConfig {
@@ -50,8 +48,8 @@ pub struct Gpt2Model<B: Backend> {
 
 impl<B: Backend> Gpt2Model<B> {
     pub fn new(config: &Gpt2ModelConfig, device: &B::Device) -> Self {
-        let wte = EmbeddingConfig::new(config.vocab_size, config.emb_dim).init(device);
-        let wpe = EmbeddingConfig::new(config.context_length, config.emb_dim).init(device);
+        let wte = EmbeddingConfig::new(config.vocab_size, config.n_embed).init(device);
+        let wpe = EmbeddingConfig::new(config.context_length, config.n_embed).init(device);
         let dropout = DropoutConfig::new(config.drop_rate).init();
 
         let mut transformers = Vec::with_capacity(config.n_heads);
@@ -81,9 +79,10 @@ impl<B: Backend> Gpt2Model<B> {
             Tensor::<B, 1, Int>::from_data(Vec::from_iter(0..seq_length).as_slice(), &input.device()).unsqueeze();
         let pos_embeds = self.wpe.forward(pos_input);
         let x = tok_embeds + pos_embeds;
-        let x = self.dropout.forward(x);
-        let x = TransformerEncoderInput::new(x);
-        let x = self.transformers.forward(x);
+        let mut x = self.dropout.forward(x);
+        for transformer in &self.transformers {
+            x = transformer.forward(x);
+        }
         let x = self.ln_f.forward(x);
         let x = self.lm_head.forward(x);
         x.flatten(0, 1)

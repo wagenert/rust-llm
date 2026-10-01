@@ -1,10 +1,9 @@
-use burn::config::Config;
 use burn::nn::LayerNormConfig;
 use burn::{module::Module, nn::LayerNorm, tensor::backend::Backend};
 
-use crate::Gpt2ModelConfig;
 use crate::attention::{CasualSelfAttention, CasualSelfAttentionConfig};
 use crate::mlp::{Mlp, MlpConfig};
+use crate::Gpt2ModelConfig;
 
 #[derive(Debug)]
 pub struct TransformerBlockConfig {
@@ -53,5 +52,16 @@ impl<B: Backend> TransformerBlock<B> {
         let attn = CasualSelfAttentionConfig::new(config).init(device);
         let mlp = MlpConfig::new(config).init(device);
         Self { ln_1, ln_2, attn, mlp }
+    }
+
+    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+        let residual = input.clone();
+        let x = self.ln_1.forward(input);
+        let x = self.attn.forward(x);
+        let x = x + residual;
+        let residual = x.clone();
+        let x = self.ln_2.forward(x);
+        let x = self.mlp.forward(x);
+        x + residual
     }
 }

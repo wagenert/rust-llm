@@ -55,4 +55,12 @@ impl<B: Backend> Mlp<B> {
             c_proj,
         }
     }
+
+    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+        let x = self.c_fc.forward(input);
+        let x = self.act.forward(x);
+        let x = self.c_proj.forward(x);
+        let x = self.dropout.forward(x);
+        x
+    }
 }
