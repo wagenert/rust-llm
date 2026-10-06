@@ -13,7 +13,7 @@ fn main() {
     println!("Model initialized successfully!");
     let text_token_converter = text_token_converter::TextTokenConverter::new("gpt2");
     let input_ids = text_token_converter.text_to_token_ids(input_text, &device);
-    let output_ids = generate_text_simple(&model, input_ids, 50, model.get_context_length() as i32); 
+    let output_ids = generate_text_simple(&model, input_ids, 50, model.get_context_length() as i32, None, None, None); 
     let output = text_token_converter.token_ids_to_text(output_ids).unwrap();
     println!("Next text: {:?}", output);
 }
