@@ -126,7 +126,7 @@ impl<B: Backend> CasualSelfAttention<B> {
 
     fn causal_mask(&self, seq_length: usize, device: &B::Device) -> Tensor<B, 4, Float> {
         let mut mask = Tensor::<B, 2, Float>::zeros([seq_length, seq_length], device);
-        let boolean_mask = Tensor::<B, 2, Bool>::tril_mask([seq_length, seq_length], 1, device);
+        let boolean_mask = Tensor::<B, 2, Bool>::tril_mask([seq_length, seq_length], 0, device);
         mask = mask.mask_fill(boolean_mask, f64::NEG_INFINITY);
         mask.unsqueeze::<4>()
     }
