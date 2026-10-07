@@ -2,24 +2,24 @@ use crate::Gpt2Model;
 use burn::prelude::*;
 use burn::tensor::{backend::Backend, Distribution, Tensor};
 
-/// Samples one index from a 2D tensor of probabilities [batch_size, num_classes]
+/// Samples one index from a 3D tensor of probabilities [batch_size, 1, num_classes]
 /// using the Gumbel-Max trick.
-fn burn_multinomial_one_sample<B: Backend>(probs: Tensor<B, 2>) -> Tensor<B, 2, burn::tensor::Int> {
+fn burn_multinomial_one_sample<B: Backend>(probs: Tensor<B, 3>) -> Tensor<B, 2, burn::tensor::Int> {
     let device = probs.device();
     let shape = probs.shape();
 
     // 1. Generate Uniform(0, 1) noise matching the probability shape
-    let uniform = Tensor::<B, 2>::random(shape, Distribution::Default, &device);
+    let uniform = Tensor::<B, 3>::random(shape.clone(), Distribution::Default, &device);
 
     // 2. Transform Uniform noise into Gumbel noise: -log(-log(U))
     let eps = 1e-20; // Prevent log(0)
-    let gumbel = -(-uniform.clone().clamp(eps, 1.0).log()).clamp(eps, f64::MAX).log();
+    let gumbel = -(-uniform.clone().clamp(eps, 1.0).log()).clamp(eps, f64::MAX).log().unsqueeze::<3>();
 
     // 3. Add Gumbel noise to log probabilities and take the argmax
     let logits = probs.log() + gumbel;
     
     // Returns a tensor of sampled indices with shape [batch_size, 1]
-    logits.argmax(1)
+    logits.argmax(2).reshape([shape[0], 1])
 }
 
 pub fn generate_text_simple<B: Backend>(
@@ -33,11 +33,11 @@ pub fn generate_text_simple<B: Backend>(
 ) -> Tensor<B, 2, Int> {
     let mut idx = idx.clone();
     for _ in 0..max_new_tokens {
-        let idx_cond = idx.clone().slice(s![.., (-(context_size as i32))..-1]);
-        let logits: Tensor<B, 2> = model.forward(idx_cond).squeeze_dim(0);
-        let mut logits = logits.slice(s![-1, ..]);
+        let idx_cond = idx.clone().slice(s![.., -context_size..]);
+        let logits: Tensor<B, 3> = model.forward(idx_cond);
+        let mut logits = logits.slice(s![..,-1, ..]);
         if let Some(top_k) = top_k {
-            let top_k_tensor = logits.clone().topk(top_k, 1);
+            let top_k_tensor = logits.clone().topk(top_k, 2);
             let min_val = top_k_tensor.min().try_into_scalar().expect("Failed to convert min value to scalar");
             logits = logits.clone().mask_fill(logits.lower_elem(min_val), f32::NEG_INFINITY);
         }
@@ -47,12 +47,11 @@ pub fn generate_text_simple<B: Backend>(
                 panic!("Temperature must be greater than 0");
             } else {
                 logits = logits / temperature;
-                let probas = burn::tensor::activation::softmax(logits, 1);
+                let probas = burn::tensor::activation::softmax(logits, 2);
                 burn_multinomial_one_sample(probas)
             }
         } else {
-            let probas = burn::tensor::activation::softmax(logits, 1);
-            probas.argmax(1)
+            logits.clone().argmax(2).reshape([logits.shape()[0], 1])
         };
 
 

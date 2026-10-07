@@ -6,10 +6,11 @@ type B = Wgpu<f32, i32>;
 
 const MODEL_PATH: &str = "artifacts-stored/model.mpk";
 fn main() {
-    let input_text = "Every step moves you";
+    let input_text = "A small step for me, but a giant leap for";
     let device = <B as BackendTypes>::Device::default();
     let model: Gpt2Model<B> = Gpt2ModelConfig::new().with_qkv_bias(true).init(&device);
     let model = model.load_file(MODEL_PATH, &CompactRecorder::new(), &device).unwrap();
+    let model= model.no_grad();
     println!("Model initialized successfully!");
     let text_token_converter = text_token_converter::TextTokenConverter::new("gpt2");
     let input_ids = text_token_converter.text_to_token_ids(input_text, &device);
