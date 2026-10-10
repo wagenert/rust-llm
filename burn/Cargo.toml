@@ -17,7 +17,8 @@ members = [
     "ch03/attention-helpers",
     "ch05/calculate-loss",
     "ch05/train-helpers",
-    "ch05/optimize-llm",
+    "ch05/optimize-llm", "ch06/prepare-dataset",
+    "gpt-helpers",
 ]
 
 [profile.dev]
