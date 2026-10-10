@@ -1,0 +1,9 @@
+[package]
+name = "gpt-helpers"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+burn = { version = "0.21.0", features = ["std", "wgpu", "accelerate", "train", "store"] }
+burn-store = {version = "0.21.0"}
+tiktoken = { version = "4.1.2" }
