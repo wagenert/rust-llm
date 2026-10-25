@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-polars = { version="0.55.2", features=["default"] }
+polars = { version="0.55.2", features=["default", "lazy"] }
 polars-io = { version="0.55.2", features=["csv"] }
